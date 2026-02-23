@@ -29,6 +29,14 @@ class Role extends Model
     }
 
     /**
+     * Permissions associées au rôle.
+     */
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class);
+    }
+
+    /**
      * Scope pour récupérer uniquement les rôles actifs
      */
     public function scopeActive($query)

@@ -22,8 +22,9 @@ return new class extends Migration
             $table->string('code_postal')->nullable();
             $table->string('ville')->nullable();
             $table->string('pays')->default('Tunisie');
+            $table->string('secteur')->nullable();
+            $table->text('description')->nullable();
             $table->string('logo')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

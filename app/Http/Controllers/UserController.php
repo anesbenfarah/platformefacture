@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,6 +53,20 @@ class UserController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
+        // Règle métier : 1 seul administrateur (role=admin) par société
+        $adminRoleId = Role::where('name', Role::ADMIN)->value('id');
+        if ($adminRoleId && (int) $validated['role_id'] === (int) $adminRoleId && !empty($validated['societe_id'])) {
+            $exists = User::where('role_id', $adminRoleId)
+                ->where('societe_id', $validated['societe_id'])
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'message' => 'Cette société possède déjà un administrateur.',
+                ], 422);
+            }
+        }
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -90,6 +105,24 @@ class UserController extends Controller
             'societe_id' => ['sometimes', 'nullable', 'exists:societes,id'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
+
+        // Règle métier : 1 seul administrateur (role=admin) par société
+        $adminRoleId = Role::where('name', Role::ADMIN)->value('id');
+        $newRoleId = array_key_exists('role_id', $validated) ? (int) $validated['role_id'] : (int) $user->role_id;
+        $newSocieteId = array_key_exists('societe_id', $validated) ? $validated['societe_id'] : $user->societe_id;
+
+        if ($adminRoleId && $newRoleId === (int) $adminRoleId && !empty($newSocieteId)) {
+            $exists = User::where('role_id', $adminRoleId)
+                ->where('societe_id', $newSocieteId)
+                ->where('id', '!=', $user->id)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'message' => 'Cette société possède déjà un administrateur.',
+                ], 422);
+            }
+        }
 
         if (isset($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);

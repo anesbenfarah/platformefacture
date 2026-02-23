@@ -1,7 +1,12 @@
-import { Link } from '@inertiajs/react';
-import { ShieldCheck, Building2, Settings2, LayoutDashboard, LogOut, Users } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { ShieldCheck, Building2, Settings2, LogOut, BarChart3 } from 'lucide-react';
 
-export default function Sidebar({ onLogout }) {
+export default function Sidebar() {
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        router.visit('/');
+    };
+
     return (
         <aside className="w-64 bg-slate-900 text-slate-100 min-h-screen py-6 px-4 flex flex-col">
             <div className="mb-8 px-2">
@@ -21,57 +26,56 @@ export default function Sidebar({ onLogout }) {
             </div>
 
             <nav className="space-y-1 text-sm flex-1">
-                <Link
-                    href="/dashboard"
-                    className="flex items-center gap-2 px-3 py-2 rounded-md bg-slate-800 text-slate-50 font-medium shadow-sm"
-                >
-                    <LayoutDashboard className="h-4 w-4" />
-                    <span>Statistiques</span>
-                </Link>
-
-                <div className="mt-4 text-[11px] uppercase tracking-wide text-slate-500 px-3">
+                <div className="text-[11px] uppercase tracking-wide text-slate-500 px-3 mb-2">
                     Gestion
                 </div>
 
-                <button
-                    type="button"
-                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
+                {/* Statistiques */}
+                <Link
+                    href="/statistiques"
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
+                >
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Statistiques</span>
+                </Link>
+
+                {/* Sociétés */}
+                <Link
+                    href="/societes"
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
                 >
                     <Building2 className="h-4 w-4" />
                     <span>Sociétés</span>
-                </button>
+                </Link>
 
-                <button
-                    type="button"
-                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
-                >
-                    <Users className="h-4 w-4" />
-                    <span>Administrateurs</span>
-                </button>
-
-                <button
-                    type="button"
-                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
+                {/* Permissions */}
+                <Link
+                    href="/permissions"
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
                 >
                     <ShieldCheck className="h-4 w-4" />
                     <span>Permissions</span>
-                </button>
+                </Link>
 
-                <button
-                    type="button"
-                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
+                {/* Paramètres généraux */}
+                <Link
+                    href="/parametres-generaux"
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
                 >
                     <Settings2 className="h-4 w-4" />
-                    <span>Paramètres globaux</span>
-                </button>
+                    <span>Paramètres généraux</span>
+                </Link>
             </nav>
 
-            <div className="pt-4 mt-4 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between gap-2">
-                <span>Connecté en tant que SuperAdmin</span>
+            {/* Footer — Déconnexion */}
+            <div className="pt-4 mt-4 border-t border-slate-800">
+                <div className="text-[11px] text-slate-500 mb-3">
+                    Connecté en tant que SuperAdmin
+                </div>
                 <button
                     type="button"
-                    onClick={onLogout}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md bg-red-500 text-white hover:bg-red-600"
+                    onClick={handleLogout}
+                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
                 >
                     <LogOut className="h-3 w-3" />
                     Se déconnecter

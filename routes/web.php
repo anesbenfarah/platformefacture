@@ -16,3 +16,20 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->name('dashboard');
+
+Route::get('/societes', function () {
+    return Inertia::render('Societes');
+})->name('societes');
+
+Route::get('/permissions', function () {
+    return Inertia::render('Permissions');
+})->name('permissions');
+
+Route::get('/statistiques', function () {
+    return Inertia::render('Statistiques');
+})->name('statistiques');
+
+Route::get('/parametres-generaux', function () {
+    return Inertia::render('ParametresGeneraux');
+})->name('parametres.generaux');
+

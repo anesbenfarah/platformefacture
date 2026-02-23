@@ -27,6 +27,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        // Ne rien faire : la table `roles` sera supprimée
+        // par la migration 0000_01_01_000000_create_roles_table.php.
     }
 };

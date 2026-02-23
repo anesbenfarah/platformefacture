@@ -32,6 +32,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('societes');
+        // Ne rien faire : la table `societes` sera supprimée
+        // par la migration 2024_01_01_000002_create_societes_table.php.
     }
 };

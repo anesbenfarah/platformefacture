@@ -19,12 +19,9 @@ class Societe extends Model
         'code_postal',
         'ville',
         'pays',
+        'secteur',
+        'description',
         'logo',
-        'is_active'
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
     ];
 
     /**
@@ -57,11 +54,4 @@ class Societe extends Model
             });
     }
 
-    /**
-     * Scope pour récupérer uniquement les sociétés actives
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
 }

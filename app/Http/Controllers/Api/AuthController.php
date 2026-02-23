@@ -44,12 +44,10 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        // Pour le moment, SEUL l'utilisateur seedé `superadmin@devis-platform.com`
-        // est super_admin. Les utilisateurs créés via /auth/register auront
-        // un rôle plus simple (ex: client).
+        
         $role = Role::where('name', Role::CLIENT)->first();
 
-        // Si le rôle n'existe pas (seed non lancé), on le crée rapidement
+       
         if (! $role) {
             $role = Role::create([
                 'name' => Role::CLIENT,

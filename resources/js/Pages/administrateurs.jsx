@@ -4,21 +4,21 @@ import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
 import { Plus, X, Search, Edit, Trash } from 'lucide-react';
 
-export default function Societes() {
-  const [societes, setSocietes] = useState([]);
+export default function Administrateurs() {
+  const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [editSociete, setEditSociete] = useState(null);
+  const [editAdmin, setEditAdmin] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [successMsg, setSuccessMsg] = useState(null);
 
   const [form, setForm] = useState({
-    nom: '', email: '', telephone: '', adresse: '',
-    code_postal: '', ville: '', pays: '', secteur: '',
-    description: '', logo: '', admin_name: '', admin_email: '',
-    admin_password: '', admin_telephone: '',
+    name: '',
+    email: '',
+    password: '',
+    telephone: '',
   });
 
   const getHeaders = () => ({
@@ -26,12 +26,13 @@ export default function Societes() {
     Authorization: `Bearer ${localStorage.getItem('token')}`,
   });
 
-  const fetchSocietes = () => {
+  const fetchAdmins = () => {
     setLoading(true);
     setError(null);
-    axios.get('/api/societes', { headers: getHeaders() })
-      .then(res => setSocietes(res.data.data ?? []))
-      .catch(() => setError("Erreur de chargement des sociétés"))
+    // Adapter l'endpoint selon votre API : ici on suppose /api/admins
+    axios.get('/api/admins', { headers: getHeaders() })
+      .then(res => setAdmins(res.data.data ?? []))
+      .catch(() => setError("Erreur de chargement des administrateurs"))
       .finally(() => setLoading(false));
   };
 
@@ -41,7 +42,7 @@ export default function Societes() {
       setLoading(false);
       return;
     }
-    fetchSocietes();
+    fetchAdmins();
   }, []);
 
   const showSuccess = (msg) => {
@@ -50,37 +51,35 @@ export default function Societes() {
   };
 
   const resetForm = () => ({
-    nom: '', email: '', telephone: '', adresse: '',
-    code_postal: '', ville: '', pays: '', secteur: '',
-    description: '', logo: '', admin_name: '', admin_email: '',
-    admin_password: '', admin_telephone: '',
+    name: '',
+    email: '',
+    password: '',
+    telephone: '',
   });
 
   const openAddModal = () => {
-    setEditSociete(null);
+    setEditAdmin(null);
     setForm(resetForm());
     setShowModal(true);
   };
 
-  const openEditModal = (s) => {
-    setEditSociete(s);
+  const openEditModal = (admin) => {
+    setEditAdmin(admin);
     setForm({
-      nom: s.nom ?? '', email: s.email ?? '', telephone: s.telephone ?? '',
-      adresse: s.adresse ?? '', code_postal: s.code_postal ?? '',
-      ville: s.ville ?? '', pays: s.pays ?? '', secteur: s.secteur ?? '',
-      description: s.description ?? '', logo: s.logo ?? '',
-      admin_name: s.admin?.name ?? '', admin_email: s.admin?.email ?? '',
-      admin_password: '', admin_telephone: s.admin?.telephone ?? '',
+      name: admin.name ?? '',
+      email: admin.email ?? '',
+      password: '', // Ne pas pré-remplir le mot de passe
+      telephone: admin.telephone ?? '',
     });
     setShowModal(true);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette société ?")) return;
+    if (!confirm("Voulez-vous vraiment supprimer cet administrateur ?")) return;
     try {
-      await axios.delete(`/api/societes/${id}`, { headers: getHeaders() });
-      showSuccess("Société supprimée avec succès");
-      fetchSocietes();
+      await axios.delete(`/api/admins/${id}`, { headers: getHeaders() });
+      showSuccess("Administrateur supprimé avec succès");
+      fetchAdmins();
     } catch {
       alert("Erreur lors de la suppression");
     }
@@ -90,15 +89,15 @@ export default function Societes() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      if (editSociete) {
-        await axios.put(`/api/societes/${editSociete.id}`, form, { headers: getHeaders() });
-        showSuccess("Société modifiée avec succès");
+      if (editAdmin) {
+        await axios.put(`/api/admins/${editAdmin.id}`, form, { headers: getHeaders() });
+        showSuccess("Administrateur modifié avec succès");
       } else {
-        await axios.post('/api/societes', form, { headers: getHeaders() });
-        showSuccess("Société ajoutée avec succès");
+        await axios.post('/api/admins', form, { headers: getHeaders() });
+        showSuccess("Administrateur ajouté avec succès");
       }
       setShowModal(false);
-      fetchSocietes();
+      fetchAdmins();
     } catch (err) {
       alert(err.response?.data?.message ?? "Erreur lors de l'enregistrement");
     } finally {
@@ -106,11 +105,11 @@ export default function Societes() {
     }
   };
 
-  const filtered = societes.filter(s =>
-    `${s.nom} ${s.secteur ?? ''} ${s.ville ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase())
+  const filtered = admins.filter(a =>
+    `${a.name} ${a.email} ${a.telephone ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Champ avec label (comme l'image)
+  // Composant Field identique à celui de Societes
   const Field = ({ label, name, type = 'text', required, children }) => (
     <div className="flex flex-col gap-1">
       <label className="text-sm font-medium text-gray-700 text-center">
@@ -140,7 +139,7 @@ export default function Societes() {
       <div className="text-red-500 text-center">
         <h2 className="text-2xl font-bold">Erreur</h2>
         <p>{error}</p>
-        <button onClick={fetchSocietes} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+        <button onClick={fetchAdmins} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
           Réessayer
         </button>
       </div>
@@ -149,15 +148,15 @@ export default function Societes() {
 
   return (
     <>
-      <Head title="Sociétés" />
+      <Head title="Administrateurs" />
       <div className="flex min-h-screen bg-slate-100">
         <Sidebar />
         <div className="flex-1 p-6">
           <div className="flex flex-col gap-6">
 
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Gestion des Sociétés</h1>
-              <p className="text-gray-500 mt-1">Gérez les sociétés et leurs administrateurs.</p>
+              <h1 className="text-3xl font-bold tracking-tight">Gestion des Administrateurs</h1>
+              <p className="text-gray-500 mt-1">Gérez les administrateurs de la plateforme.</p>
             </div>
 
             {successMsg && (
@@ -170,7 +169,7 @@ export default function Societes() {
               <div className="relative flex-1 max-w-xs">
                 <input
                   type="text"
-                  placeholder="Rechercher une société..."
+                  placeholder="Rechercher un administrateur..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -184,20 +183,20 @@ export default function Societes() {
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 <Plus className="h-4 w-4" />
-                Ajouter une société
+                Ajouter un administrateur
               </button>
             </div>
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="px-6 py-4 border-b">
-                <h2 className="text-base font-semibold">Liste des Sociétés</h2>
-                <p className="text-sm text-gray-500">{filtered.length} société(s) trouvée(s)</p>
+                <h2 className="text-base font-semibold">Liste des Administrateurs</h2>
+                <p className="text-sm text-gray-500">{filtered.length} administrateur(s) trouvé(s)</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      {['Nom', 'Secteur', 'Ville', 'Admin', 'Actions'].map(h => (
+                      {['Nom', 'Email', 'Téléphone', 'Actions'].map(h => (
                         <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           {h}
                         </th>
@@ -207,20 +206,19 @@ export default function Societes() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filtered.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="text-center py-6 text-gray-400">Aucune société trouvée</td>
+                        <td colSpan={4} className="text-center py-6 text-gray-400">Aucun administrateur trouvé</td>
                       </tr>
-                    ) : filtered.map(s => (
-                      <tr key={s.id} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-4 font-medium text-gray-900">{s.nom}</td>
-                        <td className="px-6 py-4 text-gray-600">{s.secteur ?? '—'}</td>
-                        <td className="px-6 py-4 text-gray-600">{s.ville ?? '—'}</td>
-                        <td className="px-6 py-4 text-gray-600">{s.admin?.name ?? '—'}</td>
+                    ) : filtered.map(admin => (
+                      <tr key={admin.id} className="hover:bg-slate-50 transition">
+                        <td className="px-6 py-4 font-medium text-gray-900">{admin.name}</td>
+                        <td className="px-6 py-4 text-gray-600">{admin.email}</td>
+                        <td className="px-6 py-4 text-gray-600">{admin.telephone ?? '—'}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-3">
-                            <button onClick={() => openEditModal(s)} className="text-blue-600 hover:text-blue-900">
+                            <button onClick={() => openEditModal(admin)} className="text-blue-600 hover:text-blue-900">
                               <Edit className="h-5 w-5" />
                             </button>
-                            <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:text-red-900">
+                            <button onClick={() => handleDelete(admin.id)} className="text-red-600 hover:text-red-900">
                               <Trash className="h-5 w-5" />
                             </button>
                           </div>
@@ -235,68 +233,29 @@ export default function Societes() {
         </div>
       </div>
 
-      {/* ── Modal ── */}
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
 
-            {/* Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b">
               <h2 className="text-base font-semibold text-gray-800">
-                {editSociete ? 'Modifier la société' : 'Ajouter une société'}
+                {editAdmin ? 'Modifier l\'administrateur' : 'Ajouter un administrateur'}
               </h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Body */}
             <div className="px-6 py-4 overflow-y-auto max-h-[70vh]">
-              <form id="societe-form" onSubmit={handleSubmit} className="space-y-4">
-
-                {/* Infos société */}
-                <Field label="Nom" name="nom" required />
+              <form id="admin-form" onSubmit={handleSubmit} className="space-y-4">
+                <Field label="Nom" name="name" required />
                 <Field label="Email" name="email" type="email" required />
+                <Field label="Mot de passe" name="password" type="password" required={!editAdmin} />
                 <Field label="Téléphone" name="telephone" />
-                <Field label="Adresse" name="adresse" />
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Code postal" name="code_postal" />
-                  <Field label="Ville" name="ville" />
-                </div>
-
-                <Field label="Pays" name="pays" />
-                <Field label="Secteur" name="secteur" />
-
-                <Field label="Description" name="description">
-                  <textarea
-                    value={form.description}
-                    onChange={e => setForm({ ...form, description: e.target.value })}
-                    rows={2}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </Field>
-
-                {/* Compte Admin — uniquement à la création */}
-                {!editSociete && (
-                  <>
-                    <div className="border-t pt-4">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                        Compte Admin
-                      </p>
-                      <div className="space-y-4">
-                        <Field label="Nom admin" name="admin_name" required />
-                        <Field label="Email admin" name="admin_email" type="email" required />
-                        <Field label="Mot de passe" name="admin_password" type="password" required />
-                        <Field label="Téléphone admin" name="admin_telephone" />
-                      </div>
-                    </div>
-                  </>
-                )}
               </form>
             </div>
 
-            {/* Footer */}
             <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
               <button
                 type="button"
@@ -307,11 +266,11 @@ export default function Societes() {
               </button>
               <button
                 type="submit"
-                form="societe-form"
+                form="admin-form"
                 disabled={submitting}
                 className="px-4 py-2 text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
               >
-                {submitting ? 'En cours...' : editSociete ? 'Enregistrer' : 'Créer'}
+                {submitting ? 'En cours...' : editAdmin ? 'Enregistrer' : 'Créer'}
               </button>
             </div>
           </div>

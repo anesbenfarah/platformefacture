@@ -47,6 +47,14 @@ export default function Sidebar() {
                     <Building2 className="h-4 w-4" />
                     <span>Sociétés</span>
                 </Link>
+                  {/* admnistrateur  */}
+                  <Link
+                    href="/administrateurs"
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-slate-200 hover:bg-slate-800/60 transition-colors"
+                >
+                    <Building2 className="h-4 w-4" />
+                    <span>Administrateurs</span>
+                </Link>
 
                 {/* Permissions */}
                 <Link

@@ -21,6 +21,10 @@ Route::get('/societes', function () {
     return Inertia::render('Societes');
 })->name('societes');
 
+Route::get('/administrateurs', function () {
+    return Inertia::render('administrateurs');
+})->name('administrateurs');
+
 Route::get('/permissions', function () {
     return Inertia::render('Permissions');
 })->name('permissions');

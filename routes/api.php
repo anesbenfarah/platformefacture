@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SystemSettingController;
+use App\Http\Controllers\AdminController;
 
 // Authentification
 Route::prefix('auth')->group(function () {
@@ -19,6 +20,14 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/user', [AuthController::class, 'user']);
     });
+});
+// Gestion des Administrateurs (réservé au super_admin)
+Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('admins')->group(function () {
+    Route::get('/',          [AdminController::class, 'index']);
+    Route::get('/{id}',      [AdminController::class, 'show']);
+    Route::post('/',         [AdminController::class, 'store']);
+    Route::put('/{id}',      [AdminController::class, 'update']);
+    Route::delete('/{id}',   [AdminController::class, 'destroy']);
 });
 
 // CRUD Utilisateurs (réservé au Super Admin)

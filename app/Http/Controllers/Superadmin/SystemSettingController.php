@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\SuperAdmin;
 
+use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,4 +46,3 @@ class SystemSettingController extends Controller
         ]);
     }
 }
-

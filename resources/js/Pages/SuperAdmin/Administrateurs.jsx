@@ -4,7 +4,6 @@ import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
 import { Plus, X, Search, Edit, Trash } from 'lucide-react';
 
-// Composant Field défini à l'extérieur
 const Field = ({ label, name, type = 'text', required, value, onChange, children }) => (
   <div className="flex flex-col gap-1">
     <label className="text-sm font-medium text-gray-700 text-center">
@@ -23,7 +22,7 @@ const Field = ({ label, name, type = 'text', required, value, onChange, children
   </div>
 );
 
-export default function Administrateurs() {
+export default function SuperAdminAdministrateurs() {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,7 +30,6 @@ export default function Administrateurs() {
   const [editAdmin, setEditAdmin] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  // Modal de succès
   const [successModal, setSuccessModal] = useState({ show: false, message: '' });
 
   const [form, setForm] = useState({
@@ -156,13 +154,13 @@ export default function Administrateurs() {
 
   return (
     <>
-      <Head title="Administrateurs" />
+      <Head title="Administrateurs (Super Admin)" />
       <div className="flex min-h-screen bg-slate-100">
         <Sidebar />
         <div className="flex-1 p-6">
           <div className="flex flex-col gap-6">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Gestion des Administrateurs</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Gestion des Administrateurs (Super Admin)</h1>
               <p className="text-gray-500 mt-1">Gérez les administrateurs de la plateforme.</p>
             </div>
 
@@ -248,7 +246,6 @@ export default function Administrateurs() {
         </div>
       </div>
 
-      {/* Modal de formulaire */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
@@ -262,7 +259,7 @@ export default function Administrateurs() {
             </div>
 
             <div className="px-6 py-4 overflow-y-auto max-h-[70vh]">
-              <form id="admin-form" onSubmit={handleSubmit} className="space-y-4">
+              <form id="superadmin-admin-form" onSubmit={handleSubmit} className="space-y-4">
                 <Field
                   label="Nom"
                   name="name"
@@ -305,7 +302,7 @@ export default function Administrateurs() {
               </button>
               <button
                 type="submit"
-                form="admin-form"
+                form="superadmin-admin-form"
                 disabled={submitting}
                 className="px-4 py-2 text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
               >
@@ -316,7 +313,6 @@ export default function Administrateurs() {
         </div>
       )}
 
-      {/* Modal de succès (comme sur l'image) */}
       {successModal.show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
@@ -343,3 +339,4 @@ export default function Administrateurs() {
     </>
   );
 }
+

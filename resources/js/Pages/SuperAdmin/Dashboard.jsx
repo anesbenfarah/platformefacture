@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
 
-export default function Dashboard() {
+export default function SuperAdminDashboard() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -82,7 +82,7 @@ export default function Dashboard() {
     if (loading) {
         return (
             <>
-                <Head title="Dashboard" />
+                <Head title="Dashboard Super Admin" />
                 <div className="flex items-center justify-center min-h-screen">
                     Chargement...
                 </div>
@@ -109,17 +109,22 @@ export default function Dashboard() {
         );
     }
 
-    const isSuperAdmin = true;
-
     return (
         <>
-            <Head title="Dashboard" />
-
-            {/* Layout avec sidebar (sans navbar, logout dans la sidebar) */}
+            <Head title="Dashboard Super Admin" />
             <div className="flex min-h-screen bg-slate-100">
                 <Sidebar onLogout={handleLogout} />
-                <main className="flex-1 p-6" />
+                <main className="flex-1 p-6">
+                    <h1 className="text-3xl font-bold tracking-tight mb-4">
+                        Dashboard Super Administrateur
+                    </h1>
+                    <p className="text-gray-600">
+                        Bienvenue {user?.name}, gérez les statistiques, sociétés, administrateurs et
+                        paramètres globaux depuis cet espace.
+                    </p>
+                </main>
             </div>
         </>
     );
 }
+

@@ -44,9 +44,18 @@ export default function Welcome() {
 
             setMessage(apiMessage ?? 'Connexion réussie ! Redirection...');
 
+            // Détermination de la page de destination selon le rôle
+            const roleName = user?.role?.name ?? user?.role_name ?? null;
+            const targetPath =
+                roleName === 'super_admin'
+                    ? '/statistiques'
+                    : roleName === 'admin'
+                      ? '/admin/statistiques'
+                      : '/dashboard';
+
             // Redirection après 500ms
             setTimeout(() => {
-                router.visit('/dashboard');
+                router.visit(targetPath);
             }, 500);
 
         } catch (err) {

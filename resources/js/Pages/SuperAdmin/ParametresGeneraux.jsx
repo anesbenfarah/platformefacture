@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
 
-export default function ParametresGeneraux() {
+export default function SuperAdminParametresGeneraux() {
   const [form, setForm] = useState({
     app_name: '',
     support_email: '',
@@ -63,11 +63,11 @@ export default function ParametresGeneraux() {
 
   return (
     <>
-      <Head title="Paramètres généraux" />
+      <Head title="Paramètres généraux (Super Admin)" />
       <div className="flex min-h-screen bg-slate-100">
         <Sidebar />
         <main className="flex-1 p-6 max-w-3xl">
-          <h1 className="text-2xl font-semibold mb-4">Paramètres généraux</h1>
+          <h1 className="text-2xl font-semibold mb-4">Paramètres généraux (Super Admin)</h1>
 
           {loading && <p>Chargement...</p>}
           {error && <p className="text-red-500 mb-3">{error}</p>}
@@ -125,3 +125,4 @@ export default function ParametresGeneraux() {
     </>
   );
 }
+

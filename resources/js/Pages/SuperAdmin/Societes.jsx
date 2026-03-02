@@ -4,7 +4,6 @@ import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
 import { Plus, X, Search, Edit, Trash } from 'lucide-react';
 
-// Composant Field défini à l'extérieur pour éviter les re-rendus inutiles
 const Field = ({ label, name, type = 'text', required, value, onChange, children }) => (
   <div className="flex flex-col gap-1">
     <label className="text-sm font-medium text-gray-700 text-center">
@@ -23,7 +22,7 @@ const Field = ({ label, name, type = 'text', required, value, onChange, children
   </div>
 );
 
-export default function Societes() {
+export default function SuperAdminSocietes() {
   const [societes, setSocietes] = useState([]);
   const [adminsList, setAdminsList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,10 +31,8 @@ export default function Societes() {
   const [editSociete, setEditSociete] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  // Modal de succès
   const [successModal, setSuccessModal] = useState({ show: false, message: '' });
 
-  // État du formulaire avec toutes les clés nécessaires
   const [form, setForm] = useState({
     nom: '',
     email: '',
@@ -178,18 +175,16 @@ export default function Societes() {
 
   return (
     <>
-      <Head title="Sociétés" />
+      <Head title="Sociétés (Super Admin)" />
       <div className="flex min-h-screen bg-slate-100">
         <Sidebar />
         <div className="flex-1 p-6">
           <div className="flex flex-col gap-6">
 
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Gestion des Sociétés</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Gestion des Sociétés (Super Admin)</h1>
               <p className="text-gray-500 mt-1">Gérez les sociétés et associez un administrateur.</p>
             </div>
-
-            {/* Le bandeau de succès a été supprimé */}
 
             <div className="flex justify-between items-center">
               <div className="relative flex-1 max-w-xs">
@@ -260,7 +255,6 @@ export default function Societes() {
         </div>
       </div>
 
-      {/* Modal de formulaire */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
@@ -275,7 +269,7 @@ export default function Societes() {
             </div>
 
             <div className="px-6 py-4 overflow-y-auto max-h-[70vh]">
-              <form id="societe-form" onSubmit={handleSubmit} className="space-y-4">
+              <form id="superadmin-societe-form" onSubmit={handleSubmit} className="space-y-4">
 
                 <Field
                   label="Nom"
@@ -347,7 +341,6 @@ export default function Societes() {
                   />
                 </Field>
 
-                {/* Sélection de l'administrateur */}
                 <div className="border-t pt-4">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                     Administrateur responsable
@@ -387,7 +380,7 @@ export default function Societes() {
               </button>
               <button
                 type="submit"
-                form="societe-form"
+                form="superadmin-societe-form"
                 disabled={submitting}
                 className="px-4 py-2 text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
               >
@@ -398,7 +391,6 @@ export default function Societes() {
         </div>
       )}
 
-      {/* Modal de succès (comme sur l'image) */}
       {successModal.show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
@@ -425,3 +417,4 @@ export default function Societes() {
     </>
   );
 }
+

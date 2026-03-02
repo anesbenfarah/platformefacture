@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Head } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
-
 import axios from 'axios';
 
-export default function Permissions() {
+export default function SuperAdminPermissions() {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,11 +26,11 @@ export default function Permissions() {
 
   return (
     <>
-      <Head title="Permissions" />
+      <Head title="Permissions (Super Admin)" />
       <div className="flex min-h-screen bg-slate-100">
         <Sidebar />
         <main className="flex-1 p-6">
-          <h1 className="text-2xl font-semibold mb-4">Permissions du Super Admin</h1>
+          <h1 className="text-2xl font-semibold mb-4">Permissions du Super Administrateur</h1>
           <div className="bg-white rounded-lg shadow p-4 space-y-2">
             {loading && <p>Chargement...</p>}
             {error && <p className="text-red-500">{error}</p>}
@@ -48,3 +47,4 @@ export default function Permissions() {
     </>
   );
 }
+

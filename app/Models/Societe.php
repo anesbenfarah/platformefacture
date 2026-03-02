@@ -22,6 +22,8 @@ class Societe extends Model
         'secteur',
         'description',
         'logo',
+        'legal_info',
+        'cgv',
     ];
 
     /**

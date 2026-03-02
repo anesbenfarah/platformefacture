@@ -4,12 +4,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\SocieteController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SuperAdmin\SocieteController;
+use App\Http\Controllers\SuperAdmin\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RolePermissionController;
-use App\Http\Controllers\SystemSettingController;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\SuperAdmin\SystemSettingController;
+use App\Http\Controllers\SuperAdmin\SuperAdminController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\CommercialController as AdminCommercialController;
+use App\Http\Controllers\Admin\SocieteSettingController as AdminSocieteSettingController;
 
 // Authentification
 Route::prefix('auth')->group(function () {
@@ -23,11 +26,11 @@ Route::prefix('auth')->group(function () {
 });
 // Gestion des Administrateurs (réservé au super_admin)
 Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('admins')->group(function () {
-    Route::get('/',          [AdminController::class, 'index']);
-    Route::get('/{id}',      [AdminController::class, 'show']);
-    Route::post('/',         [AdminController::class, 'store']);
-    Route::put('/{id}',      [AdminController::class, 'update']);
-    Route::delete('/{id}',   [AdminController::class, 'destroy']);
+    Route::get('/',          [SuperAdminController::class, 'index']);
+    Route::get('/{id}',      [SuperAdminController::class, 'show']);
+    Route::post('/',         [SuperAdminController::class, 'store']);
+    Route::put('/{id}',      [SuperAdminController::class, 'update']);
+    Route::delete('/{id}',   [SuperAdminController::class, 'destroy']);
 });
 
 // CRUD Utilisateurs (réservé au Super Admin)
@@ -67,4 +70,25 @@ Route::middleware(['auth:sanctum', 'role:super_admin'])->put('/roles/{role}/perm
 Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('settings')->group(function () {
     Route::get('/', [SystemSettingController::class, 'index']);
     Route::put('/', [SystemSettingController::class, 'upsert']);
+});
+
+// Regroupe les informations générales de l'espace Super Admin
+Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('super-admin')->group(function () {
+    Route::get('/overview', [SuperAdminController::class, 'overview']);
+});
+
+// Espace Admin (par société)
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+    // Dashboard & statistiques (société)
+    Route::get('/dashboard/stats', [AdminDashboardController::class, 'stats']);
+
+    // Gestion des commerciaux de la société
+    Route::get('/commerciaux', [AdminCommercialController::class, 'index']);
+    Route::post('/commerciaux', [AdminCommercialController::class, 'store']);
+    Route::put('/commerciaux/{id}', [AdminCommercialController::class, 'update']);
+    Route::patch('/commerciaux/{id}/disable', [AdminCommercialController::class, 'disable']);
+
+    // Paramètres de la société (logo, légal, CGV, etc.)
+    Route::get('/societe/settings', [AdminSocieteSettingController::class, 'show']);
+    Route::put('/societe/settings', [AdminSocieteSettingController::class, 'update']);
 });

@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
 
-export default function Statistiques() {
+export default function SuperAdminStatistiques() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
 
@@ -30,18 +30,16 @@ export default function Statistiques() {
 
   return (
     <>
-      <Head title="Statistiques" />
+      <Head title="Statistiques (Super Admin)" />
       <div className="flex min-h-screen bg-slate-100">
         <Sidebar />
         <div className="flex-1 p-6">
           <div className="flex flex-col gap-6">
-            {/* Header avec titre et sous-titre */}
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Statistiques globales</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Statistiques globales (Super Admin)</h1>
               <p className="text-gray-500 mt-1">Aperçu des données clés de la plateforme.</p>
             </div>
 
-            {/* Message d'erreur ou de chargement */}
             {error && (
               <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm">
                 {error}
@@ -54,10 +52,8 @@ export default function Statistiques() {
               </div>
             )}
 
-            {/* Cartes statistiques */}
             {stats && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Admins */}
                 <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-500">Administrateurs</p>
@@ -71,7 +67,6 @@ export default function Statistiques() {
                   </div>
                 </div>
 
-                {/* Commerciaux */}
                 <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-500">Commerciaux</p>
@@ -84,7 +79,6 @@ export default function Statistiques() {
                   </div>
                 </div>
 
-                {/* Clients */}
                 <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-500">Clients</p>
@@ -97,7 +91,6 @@ export default function Statistiques() {
                   </div>
                 </div>
 
-                {/* Sociétés */}
                 <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-500">Sociétés</p>
@@ -117,3 +110,4 @@ export default function Statistiques() {
     </>
   );
 }
+

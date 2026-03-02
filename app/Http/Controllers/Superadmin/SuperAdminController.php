@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\SuperAdmin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -9,8 +10,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class AdminController extends Controller
+class SuperAdminController extends Controller
 {
+    /**
+     * Point d'entrée principal de l'espace Super Admin.
+     */
+    public function overview(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Espace Super Admin disponible.',
+        ]);
+    }
+
     /**
      * Liste tous les administrateurs (role = admin) avec leur société.
      */
@@ -64,14 +76,12 @@ class AdminController extends Controller
             'email'      => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password'   => ['required', 'string', 'min:8'],
             'telephone'  => ['nullable', 'string', 'max:30'],
-            // nullable : on peut créer un admin sans société
             'societe_id' => ['nullable', 'exists:societes,id'],
             'is_active'  => ['sometimes', 'boolean'],
         ]);
 
         $adminRole = Role::where('name', Role::ADMIN)->firstOrFail();
 
-        // Si une société est fournie, vérifier qu'elle n'a pas déjà un admin
         if (!empty($validated['societe_id'])) {
             $exists = User::where('role_id', $adminRole->id)
                 ->where('societe_id', $validated['societe_id'])
@@ -129,7 +139,6 @@ class AdminController extends Controller
             'is_active'  => ['sometimes', 'boolean'],
         ]);
 
-        // Si on change la société, vérifier qu'elle n'a pas déjà un admin
         if (isset($validated['societe_id'])
             && !empty($validated['societe_id'])
             && (int) $validated['societe_id'] !== (int) $admin->societe_id
@@ -191,3 +200,4 @@ class AdminController extends Controller
         ]);
     }
 }
+

@@ -187,4 +187,3 @@ class CommercialController extends Controller
         ]);
     }
 }
-

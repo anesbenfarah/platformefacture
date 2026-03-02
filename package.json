@@ -13,7 +13,7 @@
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-react": "^4.2.0",
         "autoprefixer": "^10.4.12",
-        "axios": "^1.11.0",
+        "axios": "^1.13.6",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.0",
         "postcss": "^8.4.31",
@@ -23,6 +23,13 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.1",
+        "@mui/material": "^7.3.8",
+        "@mui/x-data-grid": "^8.27.3",
+        "@tanstack/react-table": "^8.21.3",
+        "ag-grid-community": "^35.1.0",
+        "ag-grid-react": "^35.1.0",
         "lucide-react": "^0.574.0"
     }
 }

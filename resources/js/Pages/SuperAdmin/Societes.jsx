@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
 import { Plus, Search, Edit, Trash, Building2, Mail, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '@/lib/alerts';
 
 export default function SuperAdminSocietes() {
   const [societes, setSocietes] = useState([]);
@@ -13,7 +14,6 @@ export default function SuperAdminSocietes() {
   const [editSociete, setEditSociete] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [successModal, setSuccessModal] = useState({ show: false, message: '' });
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
@@ -100,13 +100,14 @@ export default function SuperAdminSocietes() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette société ?")) return;
+    const confirmed = await showConfirmAlert('Confirmation', 'Voulez-vous vraiment supprimer cette société ?', 'Supprimer');
+    if (!confirmed) return;
     try {
       await axios.delete(`/api/societes/${id}`, { headers: getHeaders() });
-      setSuccessModal({ show: true, message: "Société supprimée avec succès" });
+      await showSuccessAlert('Succès', 'Société supprimée avec succès');
       fetchSocietes();
     } catch {
-      alert("Erreur lors de la suppression");
+      await showErrorAlert('Erreur', 'Erreur lors de la suppression');
     }
   };
 
@@ -121,15 +122,15 @@ export default function SuperAdminSocietes() {
     try {
       if (editSociete) {
         await axios.put(`/api/societes/${editSociete.id}`, form, { headers: getHeaders() });
-        setSuccessModal({ show: true, message: "Société modifiée avec succès" });
+        await showSuccessAlert('Succès', 'Société modifiée avec succès');
       } else {
         await axios.post('/api/societes', form, { headers: getHeaders() });
-        setSuccessModal({ show: true, message: "Société ajoutée avec succès" });
+        await showSuccessAlert('Succès', 'Société ajoutée avec succès');
       }
       setShowModal(false);
       fetchSocietes();
     } catch (err) {
-      alert(err.response?.data?.message ?? "Erreur lors de l'enregistrement");
+      await showErrorAlert('Erreur', err.response?.data?.message ?? "Erreur lors de l'enregistrement");
     } finally {
       setSubmitting(false);
     }
@@ -465,30 +466,6 @@ export default function SuperAdminSocietes() {
         </div>
       )}
 
-      {/* Modal de succès */}
-      {successModal.show && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div className="p-6">
-              <div className="flex justify-center mb-4">
-                <div className="bg-green-100 p-3 rounded-full">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-center mb-2">Succès</h3>
-              <p className="text-gray-600 text-center mb-6">{successModal.message}</p>
-              <button
-                onClick={() => setSuccessModal({ show: false, message: '' })}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

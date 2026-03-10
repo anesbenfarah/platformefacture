@@ -7,12 +7,10 @@ export default function Welcome() {
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
-    const [message, setMessage] = useState(null);
 
     async function onSubmit(e) {
         e.preventDefault();
         setError(null);
-        setMessage(null);
 
         if (!email.trim() || !password.trim()) {
             setError('Veuillez remplir tous les champs.');
@@ -32,7 +30,7 @@ export default function Welcome() {
                 },
             );
 
-            const { user, token, role_name: apiRoleName, message: apiMessage } = response.data;
+            const { user, token, role_name: apiRoleName } = response.data;
 
             // Sauvegarder les données de connexion
             if (token) {
@@ -41,8 +39,6 @@ export default function Welcome() {
             if (user) {
                 localStorage.setItem('user', JSON.stringify(user));
             }
-
-            setMessage(apiMessage ?? 'Connexion réussie ! Redirection...');
 
             // Détermination de la page de destination selon le rôle
             const roleName = String(apiRoleName ?? user?.role?.name ?? user?.role_name ?? '')
@@ -130,12 +126,6 @@ export default function Welcome() {
                         {error && (
                             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 whitespace-pre-line">
                                 ❌ {error}
-                            </div>
-                        )}
-
-                        {message && (
-                            <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-                                ✅ {message}
                             </div>
                         )}
 

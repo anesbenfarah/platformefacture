@@ -4,6 +4,7 @@ import axios from 'axios';
 import CommercialSidebar from '@/Components/CommercialSidebar';
 import { Plus, Search, Pencil, Trash2, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '@/lib/alerts';
 
 const emptyForm = {
   type: 'product',
@@ -83,6 +84,7 @@ export default function CataloguePage() {
           await loadItems();
         }
         setSuccess('Element ajoute au catalogue avec succes.');
+        await showSuccessAlert('Succès', 'Produit/Service ajouté avec succès');
       }
       setForm(emptyForm);
       setEditingId(null);
@@ -92,8 +94,10 @@ export default function CataloguePage() {
       const apiMessage = e2.response?.data?.message ?? '';
       if (String(apiMessage).toLowerCase().includes('syntax error')) {
         setError('Erreur serveur: impossible de traiter la requete pour le moment.');
+        await showErrorAlert('Erreur', 'Erreur serveur: impossible de traiter la requete pour le moment.');
       } else {
         setError(apiMessage || 'Operation impossible.');
+        await showErrorAlert('Erreur', apiMessage || 'Operation impossible.');
       }
     } finally {
       setSaving(false);
@@ -115,19 +119,23 @@ export default function CataloguePage() {
   };
 
   const onDelete = async (id) => {
-    if (!confirm('Supprimer cet element du catalogue ?')) return;
+    const confirmed = await showConfirmAlert('Confirmation', 'Supprimer cet element du catalogue ?', 'Supprimer');
+    if (!confirmed) return;
     setError(null);
     setSuccess(null);
     try {
       await axios.delete(`/api/commercial/catalogue/${id}`, { headers: headers() });
       setItems((prev) => prev.filter((item) => item.id !== id));
       setSuccess('Element supprime du catalogue avec succes.');
+      await showSuccessAlert('Succès', 'Element supprime du catalogue avec succes.');
     } catch (e) {
       const apiMessage = e.response?.data?.message ?? '';
       if (String(apiMessage).toLowerCase().includes('syntax error')) {
         setError('Erreur serveur: suppression impossible pour le moment.');
+        await showErrorAlert('Erreur', 'Erreur serveur: suppression impossible pour le moment.');
       } else {
         setError(apiMessage || 'Suppression impossible.');
+        await showErrorAlert('Erreur', apiMessage || 'Suppression impossible.');
       }
     }
   };

@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
 import { Plus, X, Search, Edit, Trash, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '@/lib/alerts';
 
 const Field = ({ label, name, type = 'text', required, value, onChange, children }) => (
   <div className="flex flex-col gap-1">
@@ -30,7 +31,6 @@ export default function SuperAdminAdministrateurs() {
   const [editAdmin, setEditAdmin] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [successModal, setSuccessModal] = useState({ show: false, message: '' });
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
@@ -90,13 +90,14 @@ export default function SuperAdminAdministrateurs() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Voulez-vous vraiment supprimer cet administrateur ?')) return;
+    const confirmed = await showConfirmAlert('Confirmation', 'Voulez-vous vraiment supprimer cet administrateur ?', 'Supprimer');
+    if (!confirmed) return;
     try {
       await axios.delete(`/api/admins/${id}`, { headers: getHeaders() });
-      setSuccessModal({ show: true, message: 'Administrateur supprimé avec succès' });
+      await showSuccessAlert('Succès', 'Administrateur supprimé avec succès');
       fetchAdmins();
     } catch {
-      alert('Erreur lors de la suppression');
+      await showErrorAlert('Erreur', 'Erreur lors de la suppression');
     }
   };
 
@@ -111,15 +112,15 @@ export default function SuperAdminAdministrateurs() {
     try {
       if (editAdmin) {
         await axios.put(`/api/admins/${editAdmin.id}`, form, { headers: getHeaders() });
-        setSuccessModal({ show: true, message: 'Administrateur modifié avec succès' });
+        await showSuccessAlert('Succès', 'Administrateur modifié avec succès');
       } else {
         await axios.post('/api/admins', form, { headers: getHeaders() });
-        setSuccessModal({ show: true, message: 'Administrateur créé avec succès' });
+        await showSuccessAlert('Succès', 'Administrateur créé avec succès');
       }
       setShowModal(false);
       fetchAdmins();
     } catch (err) {
-      alert(err.response?.data?.message ?? "Erreur lors de l'enregistrement");
+      await showErrorAlert('Erreur', err.response?.data?.message ?? "Erreur lors de l'enregistrement");
     } finally {
       setSubmitting(false);
     }
@@ -351,29 +352,6 @@ export default function SuperAdminAdministrateurs() {
         </div>
       )}
 
-      {successModal.show && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div className="p-6">
-              <div className="flex justify-center mb-4">
-                <div className="bg-green-100 p-3 rounded-full">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-center mb-2">Succès</h3>
-              <p className="text-gray-600 text-center mb-6">{successModal.message}</p>
-              <button
-                onClick={() => setSuccessModal({ show: false, message: '' })}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

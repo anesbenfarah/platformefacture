@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
 import AdminSidebar from '@/Components/AdminSidebar';
 import { Plus, X, Search, Edit, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '@/lib/alerts';
 import {
   useReactTable,
   getCoreRowModel,
@@ -38,7 +39,6 @@ export default function AdminCommerciaux() {
   const [editCommercial, setEditCommercial] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [successModal, setSuccessModal] = useState({ show: false, message: '' });
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
@@ -106,13 +106,14 @@ export default function AdminCommerciaux() {
 
   // ✅ FIX: handleDisable wrappé avec useCallback + fetchCommerciaux dans les deps
   const handleDisable = useCallback(async (id) => {
-    if (!confirm('Désactiver ce compte commercial ?')) return;
+    const confirmed = await showConfirmAlert('Confirmation', 'Désactiver ce compte commercial ?', 'Désactiver');
+    if (!confirmed) return;
     try {
       await axios.patch(`/api/admin/commerciaux/${id}/disable`, {}, { headers: getHeaders() });
-      setSuccessModal({ show: true, message: 'Compte commercial désactivé.' });
+      await showSuccessAlert('Succès', 'Compte commercial désactivé.');
       fetchCommerciaux();
     } catch (e) {
-      alert(e.response?.data?.message ?? 'Erreur lors de la désactivation');
+      await showErrorAlert('Erreur', e.response?.data?.message ?? 'Erreur lors de la désactivation');
     }
   }, [fetchCommerciaux]);
 
@@ -124,15 +125,15 @@ export default function AdminCommerciaux() {
         const payload = { ...form };
         if (!payload.password) delete payload.password;
         await axios.put(`/api/admin/commerciaux/${editCommercial.id}`, payload, { headers: getHeaders() });
-        setSuccessModal({ show: true, message: 'Commercial mis à jour avec succès.' });
+        await showSuccessAlert('Succès', 'Commercial mis à jour avec succès.');
       } else {
         await axios.post('/api/admin/commerciaux', form, { headers: getHeaders() });
-        setSuccessModal({ show: true, message: 'Commercial créé avec succès.' });
+        await showSuccessAlert('Succès', 'Commercial créé avec succès.');
       }
       setShowModal(false);
       fetchCommerciaux();
     } catch (err) {
-      alert(err.response?.data?.message ?? "Erreur lors de l'enregistrement");
+      await showErrorAlert('Erreur', err.response?.data?.message ?? "Erreur lors de l'enregistrement");
     } finally {
       setSubmitting(false);
     }
@@ -396,22 +397,6 @@ export default function AdminCommerciaux() {
         </div>
       )}
 
-      {successModal.show && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-center mb-2">Succès</h3>
-              <p className="text-gray-600 text-center mb-6">{successModal.message}</p>
-              <button
-                onClick={() => setSuccessModal({ show: false, message: '' })}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

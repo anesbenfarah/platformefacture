@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
-use App\Models\User;
+use App\Services\SuperAdmin\SuperAdminService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class SuperAdminController extends Controller
 {
+    public function __construct(
+        private readonly SuperAdminService $superAdminService
+    ) {
+    }
+
     /**
      * Point d'entrée principal de l'espace Super Admin.
      */
@@ -28,15 +31,9 @@ class SuperAdminController extends Controller
      */
     public function index(): JsonResponse
     {
-        $adminRole = Role::where('name', Role::ADMIN)->firstOrFail();
-
-        $admins = User::with('societe')
-            ->where('role_id', $adminRole->id)
-            ->get();
-
         return response()->json([
             'success' => true,
-            'data'    => $admins,
+            'data' => $this->superAdminService->listAdmins(),
         ]);
     }
 
@@ -45,11 +42,7 @@ class SuperAdminController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $adminRole = Role::where('name', Role::ADMIN)->firstOrFail();
-
-        $admin = User::with('societe')
-            ->where('role_id', $adminRole->id)
-            ->find($id);
+        $admin = $this->superAdminService->findAdmin($id);
 
         if (!$admin) {
             return response()->json([
@@ -60,7 +53,7 @@ class SuperAdminController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $admin,
+            'data' => $admin,
         ]);
     }
 
@@ -80,38 +73,19 @@ class SuperAdminController extends Controller
             'is_active'  => ['sometimes', 'boolean'],
         ]);
 
-        $adminRole = Role::where('name', Role::ADMIN)->firstOrFail();
-
-        if (!empty($validated['societe_id'])) {
-            $exists = User::where('role_id', $adminRole->id)
-                ->where('societe_id', $validated['societe_id'])
-                ->exists();
-
-            if ($exists) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cette société possède déjà un administrateur.',
-                ], 422);
-            }
+        $result = $this->superAdminService->createAdmin($validated);
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'],
+            ], $result['status']);
         }
-
-        $admin = User::create([
-            'name'       => $validated['name'],
-            'email'      => $validated['email'],
-            'password'   => Hash::make($validated['password']),
-            'telephone'  => $validated['telephone'] ?? null,
-            'role_id'    => $adminRole->id,
-            'societe_id' => $validated['societe_id'] ?? null,
-            'is_active'  => $validated['is_active'] ?? true,
-        ]);
-
-        $admin->load('societe');
 
         return response()->json([
             'success' => true,
-            'message' => 'Administrateur créé avec succès.',
-            'data'    => $admin,
-        ], 201);
+            'message' => $result['message'],
+            'data' => $result['data'],
+        ], $result['status']);
     }
 
     /**
@@ -119,54 +93,28 @@ class SuperAdminController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $adminRole = Role::where('name', Role::ADMIN)->firstOrFail();
-
-        $admin = User::where('role_id', $adminRole->id)->find($id);
-
-        if (!$admin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Administrateur non trouvé.',
-            ], 404);
-        }
-
         $validated = $request->validate([
             'name'       => ['sometimes', 'string', 'max:255'],
-            'email'      => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users')->ignore($admin->id)],
+            'email'      => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
             'password'   => ['sometimes', 'string', 'min:8'],
             'telephone'  => ['sometimes', 'nullable', 'string', 'max:30'],
             'societe_id' => ['sometimes', 'nullable', 'exists:societes,id'],
             'is_active'  => ['sometimes', 'boolean'],
         ]);
 
-        if (isset($validated['societe_id'])
-            && !empty($validated['societe_id'])
-            && (int) $validated['societe_id'] !== (int) $admin->societe_id
-        ) {
-            $exists = User::where('role_id', $adminRole->id)
-                ->where('societe_id', $validated['societe_id'])
-                ->where('id', '!=', $admin->id)
-                ->exists();
-
-            if ($exists) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cette société possède déjà un administrateur.',
-                ], 422);
-            }
+        $result = $this->superAdminService->updateAdmin($id, $validated);
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'],
+            ], $result['status']);
         }
-
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        }
-
-        $admin->update($validated);
 
         return response()->json([
             'success' => true,
-            'message' => 'Administrateur mis à jour avec succès.',
-            'data'    => $admin->fresh(['societe']),
-        ]);
+            'message' => $result['message'],
+            'data' => $result['data'],
+        ], $result['status']);
     }
 
     /**
@@ -174,30 +122,18 @@ class SuperAdminController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $adminRole = Role::where('name', Role::ADMIN)->firstOrFail();
-
-        $admin = User::where('role_id', $adminRole->id)->find($id);
-
-        if (!$admin) {
+        $result = $this->superAdminService->deleteAdmin($id, auth('sanctum')->id());
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Administrateur non trouvé.',
-            ], 404);
+                'message' => $result['message'],
+            ], $result['status']);
         }
-
-        if (auth('sanctum')->check() && auth('sanctum')->id() === $admin->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous ne pouvez pas supprimer votre propre compte.',
-            ], 403);
-        }
-
-        $admin->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Administrateur supprimé avec succès.',
-        ]);
+            'message' => $result['message'],
+        ], $result['status']);
     }
 }
 

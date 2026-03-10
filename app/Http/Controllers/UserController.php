@@ -2,24 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Role;
-use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private readonly UserService $userService
+    ) {
+    }
+
     /**
      * Liste tous les utilisateurs avec pagination
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->query('per_page', 15);
-        $users = User::paginate($perPage);
-
-        return response()->json($users, 200);
+        return response()->json(
+            $this->userService->paginateUsers((int) $request->query('per_page', 15)),
+            200
+        );
     }
 
     /**
@@ -27,7 +30,7 @@ class UserController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $user = User::find($id);
+        $user = $this->userService->findUser($id);
 
         if (!$user) {
             return response()->json([
@@ -53,34 +56,15 @@ class UserController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        // Règle métier : 1 seul administrateur (role=admin) par société
-        $adminRoleId = Role::where('name', Role::ADMIN)->value('id');
-        if ($adminRoleId && (int) $validated['role_id'] === (int) $adminRoleId && !empty($validated['societe_id'])) {
-            $exists = User::where('role_id', $adminRoleId)
-                ->where('societe_id', $validated['societe_id'])
-                ->exists();
-
-            if ($exists) {
-                return response()->json([
-                    'message' => 'Cette société possède déjà un administrateur.',
-                ], 422);
-            }
+        $result = $this->userService->createUser($validated);
+        if (!$result['success']) {
+            return response()->json(['message' => $result['message']], $result['status']);
         }
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'telephone' => $validated['telephone'] ?? null,
-            'role_id' => $validated['role_id'],
-            'societe_id' => $validated['societe_id'] ?? null,
-            'is_active' => $validated['is_active'] ?? true,
-        ]);
-
         return response()->json([
-            'message' => 'Utilisateur créé avec succès',
-            'user' => $user
-        ], 201);
+            'message' => $result['message'],
+            'user' => $result['data'],
+        ], $result['status']);
     }
 
     /**
@@ -88,17 +72,9 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $user = User::find($id);
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'Utilisateur non trouvé'
-            ], 404);
-        }
-
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
             'password' => ['sometimes', 'string', 'min:8'],
             'telephone' => ['sometimes', 'nullable', 'string', 'max:20'],
             'role_id' => ['sometimes', 'exists:roles,id'],
@@ -106,34 +82,15 @@ class UserController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        // Règle métier : 1 seul administrateur (role=admin) par société
-        $adminRoleId = Role::where('name', Role::ADMIN)->value('id');
-        $newRoleId = array_key_exists('role_id', $validated) ? (int) $validated['role_id'] : (int) $user->role_id;
-        $newSocieteId = array_key_exists('societe_id', $validated) ? $validated['societe_id'] : $user->societe_id;
-
-        if ($adminRoleId && $newRoleId === (int) $adminRoleId && !empty($newSocieteId)) {
-            $exists = User::where('role_id', $adminRoleId)
-                ->where('societe_id', $newSocieteId)
-                ->where('id', '!=', $user->id)
-                ->exists();
-
-            if ($exists) {
-                return response()->json([
-                    'message' => 'Cette société possède déjà un administrateur.',
-                ], 422);
-            }
+        $result = $this->userService->updateUser($id, $validated);
+        if (!$result['success']) {
+            return response()->json(['message' => $result['message']], $result['status']);
         }
-
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        }
-
-        $user->update($validated);
 
         return response()->json([
-            'message' => 'Utilisateur mis à jour avec succès',
-            'user' => $user->fresh()
-        ], 200);
+            'message' => $result['message'],
+            'user' => $result['data'],
+        ], $result['status']);
     }
 
     /**
@@ -141,26 +98,14 @@ class UserController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $user = User::find($id);
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'Utilisateur non trouvé'
-            ], 404);
+        $result = $this->userService->deleteUser($id, auth('sanctum')->id());
+        if (!$result['success']) {
+            return response()->json(['message' => $result['message']], $result['status']);
         }
-
-        // Empêcher de supprimer son propre compte
-        if (auth('sanctum')->check() && auth('sanctum')->user()->id === $user->id) {
-            return response()->json([
-                'message' => 'Vous ne pouvez pas supprimer votre propre compte'
-            ], 403);
-        }
-
-        $user->delete();
 
         return response()->json([
-            'message' => 'Utilisateur supprimé avec succès'
-        ], 200);
+            'message' => $result['message']
+        ], $result['status']);
     }
 }
 

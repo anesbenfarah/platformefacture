@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Permission;
+use App\Services\PermissionService;
 use Illuminate\Http\JsonResponse;
 
 class PermissionController extends Controller
 {
+    public function __construct(
+        private readonly PermissionService $permissionService
+    ) {
+    }
+
     /**
      * Liste toutes les permissions.
      */
     public function index(): JsonResponse
     {
-        $permissions = Permission::query()
-            ->orderBy('name')
-            ->get();
-
         return response()->json([
             'success' => true,
-            'data' => $permissions,
+            'data' => $this->permissionService->getAllPermissions(),
         ]);
     }
 }

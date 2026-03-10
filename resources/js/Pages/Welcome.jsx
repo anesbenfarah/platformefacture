@@ -32,7 +32,7 @@ export default function Welcome() {
                 },
             );
 
-            const { user, token, message: apiMessage } = response.data;
+            const { user, token, role_name: apiRoleName, message: apiMessage } = response.data;
 
             // Sauvegarder les données de connexion
             if (token) {
@@ -45,13 +45,17 @@ export default function Welcome() {
             setMessage(apiMessage ?? 'Connexion réussie ! Redirection...');
 
             // Détermination de la page de destination selon le rôle
-            const roleName = user?.role?.name ?? user?.role_name ?? null;
+            const roleName = String(apiRoleName ?? user?.role?.name ?? user?.role_name ?? '')
+                .trim()
+                .toLowerCase();
             const targetPath =
                 roleName === 'super_admin'
                     ? '/statistiques'
                     : roleName === 'admin'
                       ? '/admin/statistiques'
-                      : '/dashboard';
+                      : roleName === 'commercial'
+                        ? '/commercial/dashboard'
+                        : '/dashboard';
 
             // Redirection après 500ms
             setTimeout(() => {

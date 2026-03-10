@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
-use App\Models\User;
+use App\Services\Admin\CommercialService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class CommercialController extends Controller
 {
+    public function __construct(
+        private readonly CommercialService $commercialService
+    ) {
+    }
+
     /**
      * Lister les commerciaux de la société de l'admin.
      */
@@ -26,19 +29,7 @@ class CommercialController extends Controller
             ], 422);
         }
 
-        $commercialRoleId = Role::where('name', Role::COMMERCIAL)->value('id');
-        if (!$commercialRoleId) {
-            return response()->json([
-                'success' => true,
-                'data' => [],
-            ]);
-        }
-
-        $commerciaux = User::query()
-            ->where('societe_id', $user->societe_id)
-            ->where('role_id', $commercialRoleId)
-            ->orderBy('name')
-            ->get();
+        $commerciaux = $this->commercialService->listBySociete($user->societe_id);
 
         return response()->json([
             'success' => true,
@@ -68,17 +59,14 @@ class CommercialController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $commercialRole = Role::where('name', Role::COMMERCIAL)->firstOrFail();
+        if (!$this->commercialService->getCommercialRoleId()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rôle commercial introuvable.',
+            ], 422);
+        }
 
-        $commercial = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'telephone' => $validated['telephone'] ?? null,
-            'role_id' => $commercialRole->id,
-            'societe_id' => $admin->societe_id,
-            'is_active' => $validated['is_active'] ?? true,
-        ]);
+        $commercial = $this->commercialService->createForSociete($admin->societe_id, $validated);
 
         return response()->json([
             'success' => true,
@@ -101,7 +89,7 @@ class CommercialController extends Controller
             ], 422);
         }
 
-        $commercialRoleId = Role::where('name', Role::COMMERCIAL)->value('id');
+        $commercialRoleId = $this->commercialService->getCommercialRoleId();
         if (!$commercialRoleId) {
             return response()->json([
                 'success' => false,
@@ -109,11 +97,7 @@ class CommercialController extends Controller
             ], 422);
         }
 
-        $commercial = User::query()
-            ->where('id', $id)
-            ->where('societe_id', $admin->societe_id)
-            ->where('role_id', $commercialRoleId)
-            ->first();
+        $commercial = $this->commercialService->findCommercialInSociete($id, $admin->societe_id);
 
         if (!$commercial) {
             return response()->json([
@@ -130,16 +114,12 @@ class CommercialController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        }
-
-        $commercial->update($validated);
+        $updatedCommercial = $this->commercialService->updateCommercial($commercial, $validated);
 
         return response()->json([
             'success' => true,
             'message' => 'Commercial mis à jour avec succès.',
-            'data' => $commercial->fresh(),
+            'data' => $updatedCommercial,
         ]);
     }
 
@@ -157,7 +137,7 @@ class CommercialController extends Controller
             ], 422);
         }
 
-        $commercialRoleId = Role::where('name', Role::COMMERCIAL)->value('id');
+        $commercialRoleId = $this->commercialService->getCommercialRoleId();
         if (!$commercialRoleId) {
             return response()->json([
                 'success' => false,
@@ -165,11 +145,7 @@ class CommercialController extends Controller
             ], 422);
         }
 
-        $commercial = User::query()
-            ->where('id', $id)
-            ->where('societe_id', $admin->societe_id)
-            ->where('role_id', $commercialRoleId)
-            ->first();
+        $commercial = $this->commercialService->findCommercialInSociete($id, $admin->societe_id);
 
         if (!$commercial) {
             return response()->json([
@@ -178,12 +154,12 @@ class CommercialController extends Controller
             ], 404);
         }
 
-        $commercial->update(['is_active' => false]);
+        $disabledCommercial = $this->commercialService->disableCommercial($commercial);
 
         return response()->json([
             'success' => true,
             'message' => 'Compte commercial désactivé.',
-            'data' => $commercial->fresh(),
+            'data' => $disabledCommercial,
         ]);
     }
 }

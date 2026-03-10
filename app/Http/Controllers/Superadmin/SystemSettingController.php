@@ -3,24 +3,25 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SystemSetting;
+use App\Services\SuperAdmin\SystemSettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SystemSettingController extends Controller
 {
+    public function __construct(
+        private readonly SystemSettingService $systemSettingService
+    ) {
+    }
+
     /**
      * Retourne les paramètres globaux (key/value).
      */
     public function index(): JsonResponse
     {
-        $settings = SystemSetting::query()
-            ->get(['key', 'value'])
-            ->mapWithKeys(fn ($s) => [$s->key => $s->value]);
-
         return response()->json([
             'success' => true,
-            'data' => $settings,
+            'data' => $this->systemSettingService->getAllSettings(),
         ]);
     }
 
@@ -33,12 +34,7 @@ class SystemSettingController extends Controller
             'settings' => ['required', 'array'],
         ]);
 
-        foreach ($validated['settings'] as $key => $value) {
-            SystemSetting::updateOrCreate(
-                ['key' => (string) $key],
-                ['value' => is_null($value) ? null : (string) $value],
-            );
-        }
+        $this->systemSettingService->upsertSettings($validated['settings']);
 
         return response()->json([
             'success' => true,

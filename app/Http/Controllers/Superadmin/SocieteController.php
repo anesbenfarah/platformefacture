@@ -3,24 +3,26 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
 use App\Models\Societe;
-use App\Models\User;
+use App\Services\SuperAdmin\SocieteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SocieteController extends Controller
 {
+    public function __construct(
+        private readonly SocieteService $societeService
+    ) {
+    }
+
     /**
      * Liste des sociétés avec leur administrateur.
      */
     public function index(): JsonResponse
     {
-        $societes = Societe::with('admin')->get();
-
         return response()->json([
             'success' => true,
-            'data'    => $societes,
+            'data' => $this->societeService->listSocietes(),
         ]);
     }
 
@@ -47,51 +49,19 @@ class SocieteController extends Controller
             'admin_id'    => ['required', 'exists:users,id'],
         ]);
 
-        // Vérifier que l'utilisateur choisi est bien un admin
-        $adminRole = Role::where('name', Role::ADMIN)->firstOrFail();
-        $admin = User::where('id', $validated['admin_id'])
-            ->where('role_id', $adminRole->id)
-            ->first();
-
-        if (!$admin) {
+        $result = $this->societeService->createSocieteWithAdmin($validated);
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => "L'utilisateur sélectionné n'est pas un administrateur.",
-            ], 422);
+                'message' => $result['message'],
+            ], $result['status']);
         }
-
-        // Vérifier que cet admin n'est pas déjà assigné à une autre société
-        if ($admin->societe_id !== null) {
-            return response()->json([
-                'success' => false,
-                'message' => "Cet administrateur est déjà assigné à une autre société.",
-            ], 422);
-        }
-
-        // Créer la société
-        $societe = Societe::create([
-            'nom'         => $validated['nom'],
-            'email'       => $validated['email'],
-            'telephone'   => $validated['telephone'] ?? null,
-            'adresse'     => $validated['adresse'] ?? null,
-            'code_postal' => $validated['code_postal'] ?? null,
-            'ville'       => $validated['ville'] ?? null,
-            'pays'        => $validated['pays'] ?? 'Tunisie',
-            'secteur'     => $validated['secteur'] ?? null,
-            'description' => $validated['description'] ?? null,
-            'logo'        => $validated['logo'] ?? null,
-        ]);
-
-        // Assigner l'admin à cette société
-        $admin->update(['societe_id' => $societe->id]);
-
-        $societe->load('admin');
 
         return response()->json([
             'success' => true,
-            'message' => 'Société créée et administrateur assigné avec succès.',
-            'data'    => $societe,
-        ], 201);
+            'message' => $result['message'],
+            'data' => $result['data'],
+        ], $result['status']);
     }
 
     /**
@@ -99,11 +69,9 @@ class SocieteController extends Controller
      */
     public function show(Societe $societe): JsonResponse
     {
-        $societe->load(['admin', 'commerciaux']);
-
         return response()->json([
             'success' => true,
-            'data'    => $societe,
+            'data' => $this->societeService->showSociete($societe),
         ]);
     }
 
@@ -128,62 +96,19 @@ class SocieteController extends Controller
             'admin_id'    => ['sometimes', 'nullable', 'exists:users,id'],
         ]);
 
-        // Gérer le changement d'admin
-        if (array_key_exists('admin_id', $validated)) {
-            $adminRole = Role::where('name', Role::ADMIN)->firstOrFail();
-            $newAdminId = $validated['admin_id'];
-
-            // Récupérer l'admin actuel de cette société
-            $currentAdmin = User::where('role_id', $adminRole->id)
-                ->where('societe_id', $societe->id)
-                ->first();
-
-            if ($newAdminId) {
-                $newAdmin = User::where('id', $newAdminId)
-                    ->where('role_id', $adminRole->id)
-                    ->first();
-
-                if (!$newAdmin) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "L'utilisateur sélectionné n'est pas un administrateur.",
-                    ], 422);
-                }
-
-                // Vérifier que le nouvel admin n'est pas assigné ailleurs
-                if ($newAdmin->societe_id !== null && $newAdmin->societe_id !== $societe->id) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Cet administrateur est déjà assigné à une autre société.",
-                    ], 422);
-                }
-
-                // Désassigner l'ancien admin si différent
-                if ($currentAdmin && $currentAdmin->id !== $newAdmin->id) {
-                    $currentAdmin->update(['societe_id' => null]);
-                }
-
-                // Assigner le nouvel admin
-                $newAdmin->update(['societe_id' => $societe->id]);
-
-            } else {
-                // admin_id = null → désassigner l'admin actuel
-                if ($currentAdmin) {
-                    $currentAdmin->update(['societe_id' => null]);
-                }
-            }
-
-            unset($validated['admin_id']); // ne pas mettre admin_id dans la table societes
+        $result = $this->societeService->updateSociete($societe, $validated);
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'],
+            ], $result['status']);
         }
-
-        $societe->update($validated);
-        $societe->load('admin');
 
         return response()->json([
             'success' => true,
-            'message' => 'Société mise à jour avec succès.',
-            'data'    => $societe,
-        ]);
+            'message' => $result['message'],
+            'data' => $result['data'],
+        ], $result['status']);
     }
 
     /**
@@ -192,10 +117,7 @@ class SocieteController extends Controller
      */
     public function destroy(Societe $societe): JsonResponse
     {
-        // Désassigner les admins avant suppression
-        User::where('societe_id', $societe->id)->update(['societe_id' => null]);
-
-        $societe->delete();
+        $this->societeService->deleteSociete($societe);
 
         return response()->json([
             'success' => true,

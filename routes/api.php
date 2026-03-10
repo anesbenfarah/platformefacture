@@ -13,6 +13,9 @@ use App\Http\Controllers\SuperAdmin\SuperAdminController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\CommercialController as AdminCommercialController;
 use App\Http\Controllers\Admin\SocieteSettingController as AdminSocieteSettingController;
+use App\Http\Controllers\Commercial\DashboardController as CommercialDashboardController;
+use App\Http\Controllers\Commercial\CatalogueController as CommercialCatalogueController;
+use App\Http\Controllers\Commercial\ClientController as CommercialClientController;
 
 // Authentification
 Route::prefix('auth')->group(function () {
@@ -91,4 +94,16 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     // Paramètres de la société (logo, légal, CGV, etc.)
     Route::get('/societe/settings', [AdminSocieteSettingController::class, 'show']);
     Route::put('/societe/settings', [AdminSocieteSettingController::class, 'update']);
+});
+
+// Espace Commercial
+Route::middleware(['auth:sanctum', 'role:commercial'])->prefix('commercial')->group(function () {
+    Route::get('/dashboard/stats', [CommercialDashboardController::class, 'stats']);
+
+    Route::get('/catalogue', [CommercialCatalogueController::class, 'index']);
+    Route::post('/catalogue', [CommercialCatalogueController::class, 'store']);
+    Route::put('/catalogue/{id}', [CommercialCatalogueController::class, 'update']);
+    Route::delete('/catalogue/{id}', [CommercialCatalogueController::class, 'destroy']);
+
+    Route::get('/clients', [CommercialClientController::class, 'index']);
 });

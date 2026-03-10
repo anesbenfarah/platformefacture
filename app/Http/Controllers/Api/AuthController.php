@@ -25,6 +25,7 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Connexion réussie',
                 'user' => $user,
+                'role_name' => $user->role?->name,
                 'token' => $token,
             ], 200);
 
@@ -86,8 +87,12 @@ class AuthController extends Controller
 
     public function user(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $user?->load('role');
+
         return response()->json([
-            'user' => $request->user(),
+            'user' => $user,
+            'role_name' => $user?->role?->name,
         ], 200);
     }
 }

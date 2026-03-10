@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Role;
 use App\Models\Societe;
+use App\Models\CatalogueItem;
 
 class User extends Authenticatable
 {
@@ -48,6 +49,14 @@ class User extends Authenticatable
     public function societe()
     {
         return $this->belongsTo(Societe::class);
+    }
+
+    /**
+     * Catalogue gere par un commercial.
+     */
+    public function catalogueItems()
+    {
+        return $this->hasMany(CatalogueItem::class, 'commercial_id');
     }
 
     /**

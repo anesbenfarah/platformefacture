@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
 import AdminSidebar from '@/Components/AdminSidebar';
-import { Plus, X, Search, Edit, UserX } from 'lucide-react';
+import { Plus, X, Search, Edit, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -11,10 +11,9 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 
-// Composant Field (inchangé)
 const Field = ({ label, name, type = 'text', required, value, onChange, children }) => (
   <div className="flex flex-col gap-1">
-    <label className="text-sm font-medium text-gray-700 text-center">
+    <label className="text-sm font-medium text-gray-700">
       {label}
       {required && <span className="text-red-500">*</span>}
     </label>
@@ -40,6 +39,8 @@ export default function AdminCommerciaux() {
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [successModal, setSuccessModal] = useState({ show: false, message: '' });
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
   const [form, setForm] = useState({
     name: '',
@@ -48,13 +49,12 @@ export default function AdminCommerciaux() {
     telephone: '',
   });
 
-  // Headers pour axios (inchangé)
   const getHeaders = () => ({
     Accept: 'application/json',
     Authorization: `Bearer ${localStorage.getItem('token')}`,
   });
 
-  // Chargement des données (inchangé)
+  // ✅ FIX: fetchCommerciaux avec useCallback (était déjà correct)
   const fetchCommerciaux = useCallback(() => {
     setLoading(true);
     setError(null);
@@ -73,7 +73,6 @@ export default function AdminCommerciaux() {
     fetchCommerciaux();
   }, [fetchCommerciaux]);
 
-  // Gestion du formulaire (inchangé)
   const resetForm = () => ({
     name: '',
     email: '',
@@ -81,13 +80,15 @@ export default function AdminCommerciaux() {
     telephone: '',
   });
 
+  // ✅ FIX: openAddModal — simple, pas besoin de useCallback ici
   const openAddModal = () => {
     setEditCommercial(null);
     setForm(resetForm());
     setShowModal(true);
   };
 
-  const openEditModal = (c) => {
+  // ✅ FIX: openEditModal wrappé avec useCallback pour être stable
+  const openEditModal = useCallback((c) => {
     setEditCommercial(c);
     setForm({
       name: c.name ?? '',
@@ -96,14 +97,15 @@ export default function AdminCommerciaux() {
       telephone: c.telephone ?? '',
     });
     setShowModal(true);
-  };
+  }, []); // les setters useState sont stables, aucune dep nécessaire
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDisable = async (id) => {
+  // ✅ FIX: handleDisable wrappé avec useCallback + fetchCommerciaux dans les deps
+  const handleDisable = useCallback(async (id) => {
     if (!confirm('Désactiver ce compte commercial ?')) return;
     try {
       await axios.patch(`/api/admin/commerciaux/${id}/disable`, {}, { headers: getHeaders() });
@@ -112,7 +114,7 @@ export default function AdminCommerciaux() {
     } catch (e) {
       alert(e.response?.data?.message ?? 'Erreur lors de la désactivation');
     }
-  };
+  }, [fetchCommerciaux]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -136,12 +138,19 @@ export default function AdminCommerciaux() {
     }
   };
 
-  // Filtrage local (inchangé, mais peut être remplacé par le filtrage de TanStack si souhaité)
-  const filtered = commerciaux.filter((c) =>
-    `${c.name} ${c.email} ${c.telephone ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filtered = useMemo(
+    () =>
+      commerciaux.filter((c) =>
+        `${c.name} ${c.email} ${c.telephone ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
+    [commerciaux, searchQuery],
   );
 
-  // ----- Définition des colonnes pour TanStack Table -----
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, commerciaux.length]);
+
+  // ✅ FIX: openEditModal et handleDisable ajoutés dans les deps du useMemo
   const columns = useMemo(
     () => [
       {
@@ -182,21 +191,23 @@ export default function AdminCommerciaux() {
         ),
       },
     ],
-    [], // les dépendances sont stables (openEditModal et handleDisable sont stables grâce à useCallback ? mais ici elles sont définies dans le composant, donc si on les met dans les dépendances, cela recréerait les colonnes à chaque render. On peut les laisser vides car les fonctions sont stables si on les wrappe avec useCallback, mais ce n'est pas indispensable car les colonnes sont recréées à chaque render de toute façon. Pour optimiser, on pourrait utiliser useCallback sur openEditModal et handleDisable, mais ce n'est pas critique.)
+    [openEditModal, handleDisable], // ✅ dépendances correctes
   );
 
-  // Instance de la table
   const table = useReactTable({
-    data: filtered, // on utilise les données déjà filtrées
+    data: filtered,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(), // active le tri
+    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    // Optionnel : tri initial
-    // initialState: { sorting: [{ id: 'name', desc: false }] },
   });
 
-  // États de chargement/erreur (inchangés)
+  const totalPages = Math.max(1, Math.ceil(table.getRowModel().rows.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedRows = table
+    .getRowModel()
+    .rows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -236,7 +247,6 @@ export default function AdminCommerciaux() {
               </p>
             </div>
 
-            {/* Barre de recherche et bouton d'ajout */}
             <div className="flex justify-between items-center">
               <div className="relative flex-1 max-w-xs">
                 <input
@@ -250,6 +260,7 @@ export default function AdminCommerciaux() {
                   <Search className="h-4 w-4 text-gray-400" />
                 </div>
               </div>
+              {/* ✅ FIX: onClick simple sur openAddModal */}
               <button
                 onClick={openAddModal}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -259,7 +270,6 @@ export default function AdminCommerciaux() {
               </button>
             </div>
 
-            {/* Tableau avec TanStack Table */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="px-6 py-4 border-b">
                 <h2 className="text-base font-semibold">Liste des commerciaux</h2>
@@ -295,7 +305,7 @@ export default function AdminCommerciaux() {
                         </td>
                       </tr>
                     ) : (
-                      table.getRowModel().rows.map((row) => (
+                      paginatedRows.map((row) => (
                         <tr key={row.id} className="hover:bg-slate-50 transition">
                           {row.getVisibleCells().map((cell) => (
                             <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
@@ -308,12 +318,35 @@ export default function AdminCommerciaux() {
                   </tbody>
                 </table>
               </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t bg-gray-50">
+                <p className="text-xs text-gray-500">
+                  Page {currentPage} / {totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md border bg-white disabled:opacity-50"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Precedent
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md border bg-white disabled:opacity-50"
+                  >
+                    Suivant
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </main>
       </div>
 
-      {/* Modale d'ajout/édition (inchangée) */}
+      {/* ✅ Modal ajout/édition — rendu conditionnel correct */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
@@ -363,7 +396,6 @@ export default function AdminCommerciaux() {
         </div>
       )}
 
-      {/* Modale de succès (inchangée) */}
       {successModal.show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">

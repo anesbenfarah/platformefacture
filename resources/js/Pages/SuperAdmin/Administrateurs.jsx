@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
-import { Plus, X, Search, Edit, Trash } from 'lucide-react';
+import { Plus, X, Search, Edit, Trash, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Field = ({ label, name, type = 'text', required, value, onChange, children }) => (
   <div className="flex flex-col gap-1">
@@ -31,6 +31,8 @@ export default function SuperAdminAdministrateurs() {
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [successModal, setSuccessModal] = useState({ show: false, message: '' });
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
   const [form, setForm] = useState({
     name: '',
@@ -129,6 +131,14 @@ export default function SuperAdminAdministrateurs() {
       .includes(searchQuery.toLowerCase())
   );
 
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, admins.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen">
@@ -213,12 +223,17 @@ export default function SuperAdminAdministrateurs() {
                         </td>
                       </tr>
                     ) : (
-                      filtered.map((admin) => (
+                      paginated.map((admin) => (
                         <tr key={admin.id} className="hover:bg-slate-50 transition">
                           <td className="px-6 py-4 font-medium text-gray-900">{admin.name}</td>
                           <td className="px-6 py-4 text-gray-600">{admin.email}</td>
                           <td className="px-6 py-4 text-gray-600">{admin.telephone ?? '—'}</td>
-                          <td className="px-6 py-4 text-gray-600">{admin.societe?.nom ?? '—'}</td>
+                          <td className="px-6 py-4 text-gray-600">
+                            <span className="inline-flex items-center gap-1">
+                              <Building2 className="h-4 w-4 text-slate-400" />
+                              {admin.societe?.nom ?? '—'}
+                            </span>
+                          </td>
                           <td className="px-6 py-4">
                             <div className="flex gap-3">
                               <button
@@ -240,6 +255,29 @@ export default function SuperAdminAdministrateurs() {
                     )}
                   </tbody>
                 </table>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t bg-gray-50">
+                <p className="text-xs text-gray-500">
+                  Page {currentPage} / {totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md border bg-white disabled:opacity-50"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Precedent
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md border bg-white disabled:opacity-50"
+                  >
+                    Suivant
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

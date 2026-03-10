@@ -3,20 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 
 class RoleController extends Controller
 {
+    public function __construct(
+        private readonly RoleService $roleService
+    ) {
+    }
+
     /**
      * Lister tous les rôles actifs.
      */
     public function index(): JsonResponse
     {
-        $roles = Role::active()->get();
-
         return response()->json([
             'success' => true,
-            'data' => $roles,
+            'data' => $this->roleService->getActiveRoles(),
         ]);
     }
 
@@ -25,11 +29,9 @@ class RoleController extends Controller
      */
     public function show(Role $role): JsonResponse
     {
-        $role->load('users');
-
         return response()->json([
             'success' => true,
-            'data' => $role,
+            'data' => $this->roleService->getRoleWithUsers($role),
         ]);
     }
 }

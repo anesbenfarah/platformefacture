@@ -3,6 +3,7 @@
 namespace App\Models;
 use App\Models\User;   
 use App\Models\Role; 
+use App\Models\CatalogueItem;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -54,6 +55,14 @@ class Societe extends Model
             ->whereHas('role', function ($query) {
                 $query->where('name', Role::COMMERCIAL);
             });
+    }
+
+    /**
+     * Catalogue produits/services de la societe.
+     */
+    public function catalogueItems()
+    {
+        return $this->hasMany(CatalogueItem::class);
     }
 
 }

@@ -3,11 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Services\RolePermissionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class RolePermissionController extends Controller
 {
+    public function __construct(
+        private readonly RolePermissionService $rolePermissionService
+    ) {
+    }
+
     /**
      * Remplacer les permissions d'un rôle.
      */
@@ -18,7 +24,7 @@ class RolePermissionController extends Controller
             'permission_ids.*' => ['integer', 'exists:permissions,id'],
         ]);
 
-        $role->permissions()->sync($validated['permission_ids']);
+        $this->rolePermissionService->syncRolePermissions($role, $validated['permission_ids']);
 
         return response()->json([
             'success' => true,

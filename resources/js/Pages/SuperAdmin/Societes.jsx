@@ -2,25 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar';
-import { Plus, X, Search, Edit, Trash } from 'lucide-react';
-
-const Field = ({ label, name, type = 'text', required, value, onChange, children }) => (
-  <div className="flex flex-col gap-1">
-    <label className="text-sm font-medium text-gray-700 text-center">
-      {label}{required && <span className="text-red-500">*</span>}
-    </label>
-    {children ?? (
-      <input
-        type={type}
-        name={name}
-        required={required}
-        value={value}
-        onChange={onChange}
-        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    )}
-  </div>
-);
+import { Plus, Search, Edit, Trash, Building2, Mail, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function SuperAdminSocietes() {
   const [societes, setSocietes] = useState([]);
@@ -32,6 +14,8 @@ export default function SuperAdminSocietes() {
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [successModal, setSuccessModal] = useState({ show: false, message: '' });
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
   const [form, setForm] = useState({
     nom: '',
@@ -155,6 +139,14 @@ export default function SuperAdminSocietes() {
     `${s.nom} ${s.secteur ?? ''} ${s.ville ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, societes.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   if (loading) return (
     <div className="flex items-center justify-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -166,7 +158,10 @@ export default function SuperAdminSocietes() {
       <div className="text-red-500 text-center">
         <h2 className="text-2xl font-bold">Erreur</h2>
         <p>{error}</p>
-        <button onClick={fetchSocietes} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+        <button
+          onClick={fetchSocietes}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
           Réessayer
         </button>
       </div>
@@ -180,24 +175,25 @@ export default function SuperAdminSocietes() {
         <Sidebar />
         <div className="flex-1 p-6">
           <div className="flex flex-col gap-6">
-
+            {/* En-tête */}
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Gestion des Sociétés (Super Admin)</h1>
-              <p className="text-gray-500 mt-1">Gérez les sociétés et associez un administrateur.</p>
+              <h1 className="text-3xl font-bold text-gray-900">Sociétés</h1>
+              <p className="text-gray-500 mt-1">
+                {filtered.length} société(s) enregistrée(s)
+              </p>
             </div>
 
-            <div className="flex justify-between items-center">
-              <div className="relative flex-1 max-w-xs">
+            {/* Barre de recherche et bouton d'ajout */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Rechercher une société..."
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher..."
+                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-gray-400" />
-                </div>
               </div>
               <button
                 onClick={openAddModal}
@@ -209,188 +205,267 @@ export default function SuperAdminSocietes() {
             </div>
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="px-6 py-4 border-b">
-                <h2 className="text-base font-semibold">Liste des Sociétés</h2>
-                <p className="text-sm text-gray-500">{filtered.length} société(s) trouvée(s)</p>
-              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      {['Nom', 'Secteur', 'Ville', 'Admin', 'Actions'].map(h => (
-                        <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {h}
-                        </th>
-                      ))}
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Societe</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Localisation</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admin</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filtered.length === 0 ? (
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {paginated.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="text-center py-6 text-gray-400">Aucune société trouvée</td>
-                      </tr>
-                    ) : filtered.map(s => (
-                      <tr key={s.id} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-4 font-medium text-gray-900">{s.nom}</td>
-                        <td className="px-6 py-4 text-gray-600">{s.secteur ?? '—'}</td>
-                        <td className="px-6 py-4 text-gray-600">{s.ville ?? '—'}</td>
-                        <td className="px-6 py-4 text-gray-600">{s.admin?.name ?? '—'}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-3">
-                            <button onClick={() => openEditModal(s)} className="text-blue-600 hover:text-blue-900">
-                              <Edit className="h-5 w-5" />
-                            </button>
-                            <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:text-red-900">
-                              <Trash className="h-5 w-5" />
-                            </button>
-                          </div>
+                        <td colSpan={5} className="text-center py-8 text-gray-400">
+                          Aucune societe trouvee
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      paginated.map((s) => (
+                        <tr key={s.id} className="hover:bg-slate-50">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-blue-600" />
+                              <div>
+                                <p className="font-semibold text-gray-900">{s.nom}</p>
+                                <p className="text-xs text-gray-500">{s.secteur || '-'}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="inline-flex items-center gap-1 text-gray-600">
+                              <Mail className="h-4 w-4 text-slate-400" />
+                              {s.email}
+                            </p>
+                            <p className="inline-flex items-center gap-1 text-gray-500 text-xs mt-1">
+                              <Phone className="h-3.5 w-3.5 text-slate-400" />
+                              {s.telephone || '-'}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4 text-gray-600">
+                            {[s.ville, s.pays].filter(Boolean).join(', ') || '-'}
+                          </td>
+                          <td className="px-6 py-4 text-gray-600">{s.admin?.name ?? '-'}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <button onClick={() => openEditModal(s)} className="text-blue-600 hover:text-blue-800" title="Modifier">
+                                <Edit className="h-5 w-5" />
+                              </button>
+                              <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:text-red-800" title="Supprimer">
+                                <Trash className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t bg-gray-50">
+                <p className="text-xs text-gray-500">Page {currentPage} / {totalPages}</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md border bg-white disabled:opacity-50"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Precedent
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md border bg-white disabled:opacity-50"
+                  >
+                    Suivant
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Modal d'ajout / modification */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-
-            <div className="flex justify-between items-center px-6 py-4 border-b">
-              <h2 className="text-base font-semibold text-gray-800">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-800">
                 {editSociete ? 'Modifier la société' : 'Ajouter une société'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="h-5 w-5" />
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
               </button>
             </div>
 
-            <div className="px-6 py-4 overflow-y-auto max-h-[70vh]">
-              <form id="superadmin-societe-form" onSubmit={handleSubmit} className="space-y-4">
-
-                <Field
-                  label="Nom"
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Nom */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Nom <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
                   name="nom"
-                  required
                   value={form.nom}
                   onChange={handleInputChange}
-                />
-
-                <Field
-                  label="Email"
-                  name="email"
-                  type="email"
                   required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
                   value={form.email}
                   onChange={handleInputChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
 
-                <Field
-                  label="Téléphone"
+              {/* Téléphone */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Téléphone</label>
+                <input
+                  type="text"
                   name="telephone"
                   value={form.telephone}
                   onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
 
-                <Field
-                  label="Adresse"
+              {/* Adresse */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Adresse</label>
+                <input
+                  type="text"
                   name="adresse"
                   value={form.adresse}
                   onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Field
-                    label="Code postal"
+              {/* Code postal et Ville */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Code postal</label>
+                  <input
+                    type="text"
                     name="code_postal"
                     value={form.code_postal}
                     onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <Field
-                    label="Ville"
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Ville</label>
+                  <input
+                    type="text"
                     name="ville"
                     value={form.ville}
                     onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+              </div>
 
-                <Field
-                  label="Pays"
+              {/* Pays */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Pays</label>
+                <input
+                  type="text"
                   name="pays"
                   value={form.pays}
                   onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
 
-                <Field
-                  label="Secteur"
+              {/* Secteur */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Secteur</label>
+                <input
+                  type="text"
                   name="secteur"
                   value={form.secteur}
                   onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
 
-                <Field label="Description" name="description">
-                  <textarea
-                    name="description"
-                    value={form.description}
-                    onChange={handleInputChange}
-                    rows={2}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </Field>
+              {/* Description */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-                <div className="border-t pt-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                    Administrateur responsable
-                  </p>
-                  <div className="space-y-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm font-medium text-gray-700 text-center">
-                        Choisir un administrateur <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="admin_id"
-                        required
-                        value={form.admin_id}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Sélectionnez un admin</option>
-                        {adminsList.map(admin => (
-                          <option key={admin.id} value={admin.id}>
-                            {admin.name} ({admin.email})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
+              {/* Administrateur responsable */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Administrateur responsable <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="admin_id"
+                  value={form.admin_id}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Sélectionnez un admin</option>
+                  {adminsList.map(admin => (
+                    <option key={admin.id} value={admin.id}>
+                      {admin.name} ({admin.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                form="superadmin-societe-form"
-                disabled={submitting}
-                className="px-4 py-2 text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
-              >
-                {submitting ? 'En cours...' : editSociete ? 'Enregistrer' : 'Créer'}
-              </button>
-            </div>
+              {/* Boutons */}
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2 text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
+                >
+                  {submitting ? 'En cours...' : (editSociete ? 'Enregistrer' : 'Créer')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
+      {/* Modal de succès */}
       {successModal.show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
@@ -417,4 +492,3 @@ export default function SuperAdminSocietes() {
     </>
   );
 }
-

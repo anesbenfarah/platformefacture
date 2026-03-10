@@ -3,39 +3,34 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Societe;
+use App\Services\Admin\SocieteSettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SocieteSettingController extends Controller
 {
+    public function __construct(
+        private readonly SocieteSettingService $societeSettingService
+    ) {
+    }
+
     /**
      * Afficher les paramètres de la société de l'admin.
      */
     public function show(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (!$user->societe_id) {
+        $result = $this->societeSettingService->showForAdminSociete($request->user()->societe_id);
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Aucune société associée à ce compte admin.',
-            ], 422);
-        }
-
-        $societe = Societe::query()->find($user->societe_id);
-
-        if (!$societe) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Société introuvable.',
-            ], 404);
+                'message' => $result['message'],
+            ], $result['status']);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $societe,
-        ]);
+            'data' => $result['data'],
+        ], $result['status']);
     }
 
     /**
@@ -43,27 +38,9 @@ class SocieteSettingController extends Controller
      */
     public function update(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (!$user->societe_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Aucune société associée à ce compte admin.',
-            ], 422);
-        }
-
-        $societe = Societe::query()->find($user->societe_id);
-
-        if (!$societe) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Société introuvable.',
-            ], 404);
-        }
-
         $validated = $request->validate([
             'nom' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:societes,email,' . $societe->id],
+            'email' => ['sometimes', 'string', 'email', 'max:255'],
             'telephone' => ['sometimes', 'nullable', 'string', 'max:30'],
             'adresse' => ['sometimes', 'nullable', 'string', 'max:255'],
             'code_postal' => ['sometimes', 'nullable', 'string', 'max:20'],
@@ -76,13 +53,26 @@ class SocieteSettingController extends Controller
             'cgv' => ['sometimes', 'nullable', 'string'],
         ]);
 
-        $societe->update($validated);
+        $societeId = $request->user()->societe_id;
+        if (!empty($validated['email'])) {
+            $request->validate([
+                'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:societes,email,' . $societeId],
+            ]);
+        }
+
+        $result = $this->societeSettingService->updateForAdminSociete($societeId, $validated);
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'],
+            ], $result['status']);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Paramètres de la société enregistrés.',
-            'data' => $societe->fresh(),
-        ]);
+            'message' => $result['message'],
+            'data' => $result['data'],
+        ], $result['status']);
     }
 }
 

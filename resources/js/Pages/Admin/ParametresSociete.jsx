@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import AdminSidebar from '@/Components/AdminSidebar';
 
@@ -26,16 +26,9 @@ export default function AdminParametresSociete() {
 
     const headers = () => ({
         Accept: 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
     });
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            router.visit('/');
-            return;
-        }
-
         axios
             .get('/api/admin/societe/settings', { headers: headers() })
             .then((res) => {

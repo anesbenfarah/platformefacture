@@ -9,18 +9,16 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            router.visit('/');
-            return;
-        }
-
         axios
             .get('/api/admin/dashboard/stats', {
-                headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+                headers: { Accept: 'application/json' },
             })
             .then((res) => setStats(res.data.data))
             .catch((e) => {
+                if (e.response?.status === 401) {
+                    router.visit('/');
+                    return;
+                }
                 setError(e.response?.data?.message ?? "Erreur de chargement du tableau de bord.");
             })
             .finally(() => setLoading(false));
@@ -55,19 +53,7 @@ export default function AdminDashboard() {
 
                         {stats && (
                             <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm text-slate-500">Utilisateurs (société)</p>
-                                            <p className="text-2xl font-bold">{stats.totals.users}</p>
-                                        </div>
-                                        <div className="bg-slate-100 p-3 rounded-full">
-                                            <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 20h6M3 20h5v-2a3 3 0 00-5.356-1.857M15 7a3 3 0 11-6 0 3 3 0 016 0zM5 7a3 3 0 116 0" />
-                                            </svg>
-                                        </div>
-                                    </div>
-
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                                     <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                                         <div>
                                             <p className="text-sm text-slate-500">Commerciaux</p>
@@ -76,18 +62,6 @@ export default function AdminDashboard() {
                                         <div className="bg-green-100 p-3 rounded-full">
                                             <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2a4 4 0 014-4h7M9 7h.01M9 7a2 2 0 11-4 0 2 2 0 014 0zm6 0h.01M15 7a2 2 0 11-4 0 2 2 0 014 0z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm text-slate-500">Commerciaux actifs</p>
-                                            <p className="text-2xl font-bold">{stats.totals.commerciaux_actifs}</p>
-                                        </div>
-                                        <div className="bg-emerald-100 p-3 rounded-full">
-                                            <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7H7m6 4H7m6 4H7m5-9l4-4m0 0l4 4m-4-4v12" />
                                             </svg>
                                         </div>
                                     </div>

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { Head, router } from '@inertiajs/react';
 
 export default function Welcome() {
@@ -8,7 +7,7 @@ export default function Welcome() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    async function onSubmit(e) {
+    function onSubmit(e) {
         e.preventDefault();
         setError(null);
 
@@ -18,62 +17,14 @@ export default function Welcome() {
         }
 
         setIsSubmitting(true);
-
-        try {
-            const response = await axios.post(
-                '/api/auth/login',
-                { email, password },
-                {
-                    headers: {
-                        Accept: 'application/json',
-                    },
-                },
-            );
-
-            const { user, token, role_name: apiRoleName } = response.data;
-
-            // Sauvegarder les données de connexion
-            if (token) {
-                localStorage.setItem('token', token);
+        router.post(
+            '/login',
+            { email, password },
+            {
+                onError: () => setError('Email ou mot de passe incorrect.'),
+                onFinish: () => setIsSubmitting(false),
             }
-            if (user) {
-                localStorage.setItem('user', JSON.stringify(user));
-            }
-
-            // Détermination de la page de destination selon le rôle
-            const roleName = String(apiRoleName ?? user?.role?.name ?? user?.role_name ?? '')
-                .trim()
-                .toLowerCase();
-            const targetPath =
-                roleName === 'super_admin'
-                    ? '/statistiques'
-                    : roleName === 'admin'
-                      ? '/admin/statistiques'
-                      : roleName === 'commercial'
-                        ? '/commercial/dashboard'
-                        : '/dashboard';
-
-            // Redirection après 500ms
-            setTimeout(() => {
-                router.visit(targetPath);
-            }, 500);
-
-        } catch (err) {
-            console.error('Erreur de connexion:', err);
-            
-            if (err.response) {
-                if (err.response.status === 401 || err.response.status === 422) {
-                    const errorMsg = err.response.data?.message || 'Email ou mot de passe incorrect.';
-                    setError(errorMsg);
-                } else {
-                    setError("Une erreur s'est produite. Réessayez.");
-                }
-            } else {
-                setError("Impossible de se connecter au serveur.");
-            }
-        } finally {
-            setIsSubmitting(false);
-        }
+        );
     }
 
     return (

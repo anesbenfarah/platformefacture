@@ -15,15 +15,8 @@ export default function SuperAdminParametresGeneraux() {
   const [success, setSuccess] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('Non authentifié');
-      setLoading(false);
-      return;
-    }
-
     axios.get('/api/settings', {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      headers: { Accept: 'application/json' },
     })
     .then(res => {
       const s = res.data.data ?? {};
@@ -42,7 +35,6 @@ export default function SuperAdminParametresGeneraux() {
     setSuccess(null);
     setSaving(true);
 
-    const token = localStorage.getItem('token');
     try {
       await axios.put('/api/settings', {
         settings: {
@@ -51,7 +43,7 @@ export default function SuperAdminParametresGeneraux() {
           default_currency: form.default_currency,
         },
       }, {
-        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+        headers: { Accept: 'application/json' },
       });
       setSuccess('Paramètres enregistrés.');
     } catch (e) {

@@ -3,38 +3,57 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function login(LoginRequest $request): JsonResponse
+    public function login(Request $request): JsonResponse
     {
-        try {
-            $request->authenticate();
-            $user = Auth::user();
-            $user->load('role');
-            $token = $user->createToken('api-token')->plainTextToken;
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
 
-            return response()->json([
-                'message' => 'Connexion réussie',
-                'user' => $user,
-                'role_name' => $user->role?->name,
-                'token' => $token,
-            ], 200);
+        $email = Str::lower(trim((string) $validated['email']));
 
-        } catch (ValidationException $e) {
+        if (!Auth::attempt(['email' => $email, 'password' => (string) $validated['password']])) {
             return response()->json([
                 'message' => 'Identifiants invalides',
-                'errors' => $e->errors(),
+                'errors' => [
+                    'email' => ['Les identifiants fournis sont incorrects.'],
+                ],
             ], 422);
         }
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $resolvedRole = optional($user->role()->first())->name
+            ?? $user->getAttribute('role')
+            ?? Role::CLIENT;
+
+        if (empty($user->role)) {
+            $user->role = $resolvedRole;
+            $user->save();
+        }
+
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Connexion réussie',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $resolvedRole,
+            ],
+            'token' => $token,
+        ], 200);
     }
 
     public function register(Request $request): JsonResponse
@@ -76,6 +95,49 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function registerClient(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        $email = Str::lower(trim((string) $validated['email']));
+
+        $role = Role::query()->firstOrCreate(
+            ['name' => Role::CLIENT],
+            [
+                'display_name' => 'Client',
+                'description' => 'Compte client standard',
+                'is_active' => true,
+            ]
+        );
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $email,
+            'password' => Hash::make($validated['password']),
+            'role_id' => $role->id,
+            'role' => Role::CLIENT,
+            'societe_id' => null,
+            'is_active' => true,
+        ]);
+
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Inscription client réussie',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => Role::CLIENT,
+            ],
+            'token' => $token,
+        ], 201);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
@@ -92,7 +154,7 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => $user,
-            'role_name' => $user?->role?->name,
+            'role_name' => optional($user?->role()->first())->name ?? $user?->getAttribute('role'),
         ], 200);
     }
 }

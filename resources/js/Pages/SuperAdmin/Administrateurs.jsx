@@ -43,7 +43,6 @@ export default function SuperAdminAdministrateurs() {
 
   const getHeaders = () => ({
     Accept: 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
   });
 
   const fetchAdmins = useCallback(() => {
@@ -57,11 +56,6 @@ export default function SuperAdminAdministrateurs() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) {
-      setError('Non authentifié');
-      setLoading(false);
-      return;
-    }
     fetchAdmins();
   }, [fetchAdmins]);
 

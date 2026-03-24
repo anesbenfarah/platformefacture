@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,8 +34,27 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $user = $request->user();
+        $roleName = '';
+        if (!empty($user?->role_id)) {
+            $roleName = (string) (Role::query()->whereKey($user->role_id)->value('name') ?? '');
+        }
+        if ($roleName === '') {
+            $roleName = (string) ($user?->getAttribute('role') ?? '');
+        }
+        $roleName = str_replace([' ', '-'], '_', strtolower(trim($roleName)));
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $target = match ($roleName) {
+            Role::SUPER_ADMIN => route('statistiques', absolute: false),
+            Role::ADMIN => route('admin.statistiques', absolute: false),
+            Role::COMMERCIAL => route('commercial.dashboard', absolute: false),
+            Role::CLIENT => route('client.dashboard', absolute: false),
+            default => route('welcome', absolute: false),
+        };
+
+        // On force la destination du rôle pour éviter un ancien URL "intended"
+        // (ex: /statistiques) mémorisé en session.
+        return redirect()->to($target);
     }
 
     /**

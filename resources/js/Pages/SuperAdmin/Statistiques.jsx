@@ -8,15 +8,9 @@ export default function SuperAdminStatistiques() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('Non authentifié');
-      return;
-    }
-
     axios
       .get('/api/dashboard/stats', {
-        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+        headers: { Accept: 'application/json' },
       })
       .then((res) => setStats(res.data.data))
       .catch(() => setError('Erreur de chargement des statistiques'));

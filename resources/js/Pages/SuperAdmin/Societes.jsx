@@ -33,7 +33,6 @@ export default function SuperAdminSocietes() {
 
   const getHeaders = () => ({
     Accept: 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
   });
 
   const fetchSocietes = useCallback(() => {
@@ -52,11 +51,6 @@ export default function SuperAdminSocietes() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) {
-      setError("Non authentifié");
-      setLoading(false);
-      return;
-    }
     fetchSocietes();
     fetchAdmins();
   }, [fetchSocietes, fetchAdmins]);

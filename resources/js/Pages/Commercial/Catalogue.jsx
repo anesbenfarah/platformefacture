@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import CommercialSidebar from '@/Components/CommercialSidebar';
 import { Plus, Search, Pencil, Trash2, X } from 'lucide-react';
@@ -29,7 +29,6 @@ export default function CataloguePage() {
 
   const headers = () => ({
     Accept: 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
   });
 
   const loadItems = async () => {
@@ -46,11 +45,6 @@ export default function CataloguePage() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.visit('/');
-      return;
-    }
     loadItems();
   }, []);
 

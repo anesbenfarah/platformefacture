@@ -21,20 +21,14 @@ export default function CommercialSidebar() {
   const [open, setOpen] = useState(false);
   const current = typeof window !== 'undefined' ? window.location.pathname : '';
 
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (_) {}
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.visit('/');
+  const handleLogout = () => {
+    router.post('/logout', {}, {
+      onFinish: () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        router.visit('/');
+      },
+    });
   };
 
   const sidebarContent = (

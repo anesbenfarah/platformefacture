@@ -20,9 +20,13 @@ export default function AdminSidebar() {
     const current = typeof window !== 'undefined' ? window.location.pathname : '';
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        router.visit('/');
+        router.post('/logout', {}, {
+            onFinish: () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                router.visit('/');
+            },
+        });
     };
 
     const sidebarContent = (

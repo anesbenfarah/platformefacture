@@ -9,15 +9,8 @@ export default function SuperAdminPermissions() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('Non authentifié');
-      setLoading(false);
-      return;
-    }
-
     axios.get('/api/permissions', {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      headers: { Accept: 'application/json' },
     })
     .then(res => setPermissions(res.data.data ?? []))
     .catch(() => setError("Erreur de chargement des permissions"))

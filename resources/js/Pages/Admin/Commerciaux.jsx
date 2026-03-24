@@ -51,7 +51,6 @@ export default function AdminCommerciaux() {
 
   const getHeaders = () => ({
     Accept: 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
   });
 
   // ✅ FIX: fetchCommerciaux avec useCallback (était déjà correct)
@@ -66,10 +65,6 @@ export default function AdminCommerciaux() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) {
-      router.visit('/');
-      return;
-    }
     fetchCommerciaux();
   }, [fetchCommerciaux]);
 

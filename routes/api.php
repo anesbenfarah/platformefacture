@@ -22,13 +22,17 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
     
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/user', [AuthController::class, 'user']);
     });
 });
+
+// Routes publiques demandées
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register/client', [AuthController::class, 'registerClient']);
 // Gestion des Administrateurs (réservé au super_admin)
-Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('admins')->group(function () {
+Route::middleware(['auth', 'role:super_admin'])->prefix('admins')->group(function () {
     Route::get('/',          [SuperAdminController::class, 'index']);
     Route::get('/{id}',      [SuperAdminController::class, 'show']);
     Route::post('/',         [SuperAdminController::class, 'store']);
@@ -37,7 +41,7 @@ Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('admins')->group
 });
 
 // CRUD Utilisateurs (réservé au Super Admin)
-Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('users')->group(function () {
+Route::middleware(['auth', 'role:super_admin'])->prefix('users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
     Route::get('/{id}', [UserController::class, 'show']);
     Route::post('/', [UserController::class, 'store']);
@@ -46,13 +50,13 @@ Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('users')->group(
 });
 
 // Rôles (réservé au super_admin)
-Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('roles')->group(function () {
+Route::middleware(['auth', 'role:super_admin'])->prefix('roles')->group(function () {
     Route::get('/', [RoleController::class, 'index']);
     Route::get('/{role}', [RoleController::class, 'show']);
 });
 
 // Sociétés + création de l'unique administrateur (réservé au super_admin)
-Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('societes')->group(function () {
+Route::middleware(['auth', 'role:super_admin'])->prefix('societes')->group(function () {
     Route::get('/', [SocieteController::class, 'index']);
     Route::post('/', [SocieteController::class, 'store']);
     Route::get('/{societe}', [SocieteController::class, 'show']);
@@ -61,27 +65,27 @@ Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('societes')->gro
 });
 
 // Statistiques globales (réservé au super_admin)
-Route::middleware(['auth:sanctum', 'role:super_admin'])->get('/dashboard/stats', [DashboardController::class, 'stats']);
+Route::middleware(['auth', 'role:super_admin'])->get('/dashboard/stats', [DashboardController::class, 'stats']);
 
 // Permissions (réservé au super_admin)
-Route::middleware(['auth:sanctum', 'role:super_admin'])->get('/permissions', [PermissionController::class, 'index']);
+Route::middleware(['auth', 'role:super_admin'])->get('/permissions', [PermissionController::class, 'index']);
 
 // Assigner permissions à un rôle (réservé au super_admin)
-Route::middleware(['auth:sanctum', 'role:super_admin'])->put('/roles/{role}/permissions', [RolePermissionController::class, 'sync']);
+Route::middleware(['auth', 'role:super_admin'])->put('/roles/{role}/permissions', [RolePermissionController::class, 'sync']);
 
 // Paramètres système globaux (réservé au super_admin)
-Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('settings')->group(function () {
+Route::middleware(['auth', 'role:super_admin'])->prefix('settings')->group(function () {
     Route::get('/', [SystemSettingController::class, 'index']);
     Route::put('/', [SystemSettingController::class, 'upsert']);
 });
 
 // Regroupe les informations générales de l'espace Super Admin
-Route::middleware(['auth:sanctum', 'role:super_admin'])->prefix('super-admin')->group(function () {
+Route::middleware(['auth', 'role:super_admin'])->prefix('super-admin')->group(function () {
     Route::get('/overview', [SuperAdminController::class, 'overview']);
 });
 
 // Espace Admin (par société)
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     // Dashboard & statistiques (société)
     Route::get('/dashboard/stats', [AdminDashboardController::class, 'stats']);
 
@@ -97,7 +101,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 });
 
 // Espace Commercial
-Route::middleware(['auth:sanctum', 'role:commercial'])->prefix('commercial')->group(function () {
+Route::middleware(['auth', 'role:commercial'])->prefix('commercial')->group(function () {
     Route::get('/dashboard/stats', [CommercialDashboardController::class, 'stats']);
 
     Route::get('/catalogue', [CommercialCatalogueController::class, 'index']);
@@ -106,4 +110,9 @@ Route::middleware(['auth:sanctum', 'role:commercial'])->prefix('commercial')->gr
     Route::delete('/catalogue/{id}', [CommercialCatalogueController::class, 'destroy']);
 
     Route::get('/clients', [CommercialClientController::class, 'index']);
+});
+
+// Espace Client
+Route::middleware(['auth', 'role:client'])->prefix('client')->group(function () {
+    Route::get('/me', [AuthController::class, 'user']);
 });

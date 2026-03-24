@@ -21,24 +21,20 @@ export default function CommercialDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const getHeaders = () => ({
-    Accept: 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  });
-
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const stored = localStorage.getItem('user');
-    if (!token) {
-      router.visit('/');
-      return;
-    }
-    if (stored) setUser(JSON.parse(stored));
-
-    axios
-      .get('/api/commercial/dashboard/stats', { headers: getHeaders() })
-      .then((res) => setStats(res.data.data ?? null))
-      .catch(() => {})
+    Promise.all([
+      axios.get('/api/auth/user', { headers: { Accept: 'application/json' } }),
+      axios.get('/api/commercial/dashboard/stats', { headers: { Accept: 'application/json' } }),
+    ])
+      .then(([userRes, statsRes]) => {
+        setUser(userRes.data?.user ?? null);
+        setStats(statsRes.data?.data ?? null);
+      })
+      .catch((e) => {
+        if (e.response?.status === 401) {
+          router.visit('/');
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 

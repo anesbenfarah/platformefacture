@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\Role;
+use App\Repositories\Commercial\CatalogueRepository;
 use App\Repositories\Admin\SocieteRepository;
 use App\Repositories\RoleRepository;
 use App\Repositories\UserRepository;
@@ -12,7 +13,8 @@ class DashboardService
     public function __construct(
         private readonly SocieteRepository $societeRepository,
         private readonly RoleRepository $roleRepository,
-        private readonly UserRepository $userRepository
+        private readonly UserRepository $userRepository,
+        private readonly CatalogueRepository $catalogueRepository
     ) {
     }
 
@@ -48,6 +50,12 @@ class DashboardService
         $activeCommerciaux = $commercialRoleId
             ? $this->userRepository->countActiveBySocieteAndRole($societe->id, $commercialRoleId)
             : 0;
+        $totalProduits =
+            $this->catalogueRepository->countBySocieteAndType($societe->id, 'product')
+            + $this->catalogueRepository->countBySocieteAndType($societe->id, 'produit');
+        $totalServices =
+            $this->catalogueRepository->countBySocieteAndType($societe->id, 'service')
+            + $this->catalogueRepository->countBySocieteAndType($societe->id, 'services');
 
         return [
             'success' => true,
@@ -64,8 +72,8 @@ class DashboardService
                     'commerciaux' => $totalCommerciaux,
                     'commerciaux_actifs' => $activeCommerciaux,
                     'clients' => $totalClients,
-                    'produits' => 0,
-                    'services' => 0,
+                    'produits' => $totalProduits,
+                    'services' => $totalServices,
                 ],
             ],
         ];

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import CommercialSidebar from '@/Components/CommercialSidebar';
 
@@ -10,16 +10,9 @@ export default function ClientsPage() {
 
   const headers = () => ({
     Accept: 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.visit('/');
-      return;
-    }
-
     axios
       .get('/api/commercial/clients', { headers: headers() })
       .then((res) => setClients(res.data.data ?? []))

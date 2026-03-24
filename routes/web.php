@@ -28,3 +28,5 @@ Route::prefix('commercial')->group(function () {
     Route::get('/clients', fn () => Inertia::render('Commercial/Clients'))->name('commercial.clients');
     Route::get('/devis', fn () => Inertia::render('Commercial/Devis'))->name('commercial.devis');
 });
+
+require __DIR__.'/auth.php';

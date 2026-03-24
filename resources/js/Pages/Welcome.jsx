@@ -81,8 +81,8 @@ export default function Welcome() {
             <Head title="Connexion" />
             <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
                 <div className="w-full max-w-md rounded-xl bg-white shadow-lg p-8">
-                    <h1 className="text-2xl font-bold text-gray-900">Connexion</h1>
-                    <p className="mt-2 text-sm text-gray-600">
+                    <h1 className="text-center text-2xl font-bold text-gray-900">Connexion</h1>
+                    <p className="mt-2 text-center text-sm text-gray-600">
                         Connectez-vous à votre compte
                     </p>
 
@@ -140,7 +140,7 @@ export default function Welcome() {
 
                     <p className="mt-6 text-center text-sm text-gray-600">
                         Pas encore de compte ?{' '}
-                        <a href="/register" className="text-indigo-600 font-medium hover:text-indigo-500">
+                        <a href="/signup" className="text-indigo-600 font-medium hover:text-indigo-500">
                             S'inscrire
                         </a>
                     </p>
